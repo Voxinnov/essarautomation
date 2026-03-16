@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: office_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: office_automation
+      MYSQL_USER: officeuser
+      MYSQL_PASSWORD: officepassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: office_backend
+    environment:
+      PORT: 5001
+      DB_HOST: mysql
+      DB_USER: officeuser
+      DB_PASSWORD: officepassword
+      DB_NAME: office_automation
+      JWT_SECRET: your_super_secret_jwt_key_production
+      JWT_EXPIRE: 7d
+      NODE_ENV: production
+    ports:
+      - "5001:5001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    container_name: office_frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:5001/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
