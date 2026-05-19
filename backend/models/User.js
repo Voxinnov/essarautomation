@@ -10,6 +10,7 @@ const User = sequelize.define('User', {
     phone: { type: DataTypes.STRING },
     role: { type: DataTypes.ENUM('admin', 'manager', 'staff'), defaultValue: 'staff' },
     status: { type: DataTypes.ENUM('active', 'inactive'), defaultValue: 'active' },
+    roleId: { type: DataTypes.INTEGER, field: 'role_id', references: { model: 'roles', key: 'id' } },
 }, {
     tableName: 'users',
     hooks: {

@@ -4,15 +4,17 @@ import {
     IconButton, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions,
     Alert, Grid, Tooltip, Button, MenuItem, Select, FormControl, InputLabel, Chip,
 } from '@mui/material';
-import { Add, Edit, Delete, Update } from '@mui/icons-material';
+import { Add, Edit, Delete, Update, Place } from '@mui/icons-material';
 import { workUpdateService, taskService } from '../../services';
-import { formatDateTime } from '../../utils/constants';
+import { formatDate, formatDateTime } from '../../utils/constants';
 import PageHeader from '../../components/common/PageHeader';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { useAuth } from '../../context/AuthContext';
 
-const emptyForm = { task_id: '', size: '', model: '', update_note: '' };
+const emptyForm = { task_id: '', size: '', model: '', update_note: '', update_date: new Date().toISOString().split('T')[0] };
 
 const WorkUpdatesPage = () => {
+    const { user } = useAuth();
     const [tasks, setTasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState('');
     const [updates, setUpdates] = useState([]);
@@ -41,20 +43,47 @@ const WorkUpdatesPage = () => {
 
     const handleOpen = (item = null) => {
         setEditItem(item);
-        setForm(item ? { task_id: item.task_id || selectedTask, size: item.size || '', model: item.model || '', update_note: item.update_note || '' } : { ...emptyForm, task_id: selectedTask });
+        setForm(item ? { 
+            task_id: item.task_id || selectedTask, 
+            size: item.size || '', 
+            model: item.model || '', 
+            update_note: item.update_note || '',
+            update_date: item.update_date || new Date().toISOString().split('T')[0]
+        } : { ...emptyForm, task_id: selectedTask });
         setError('');
         setOpenDialog(true);
     };
 
     const handleSubmit = async () => {
         setSaving(true);
-        try {
-            if (editItem) await workUpdateService.update(editItem.id, form);
-            else await workUpdateService.create(form);
-            setOpenDialog(false);
-            fetchUpdates();
-        } catch (err) { setError(err.response?.data?.message || 'Failed to save'); }
-        finally { setSaving(false); }
+        const executeSubmit = async (geoPayload = {}) => {
+            try {
+                if (editItem) await workUpdateService.update(editItem.id, form);
+                else await workUpdateService.create({ ...form, ...geoPayload });
+                setOpenDialog(false);
+                fetchUpdates();
+            } catch (err) { setError(err.response?.data?.message || 'Failed to save'); }
+            finally { setSaving(false); }
+        };
+
+        if (!editItem && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    let location_address = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await res.json();
+                        if (data && data.display_name) location_address = data.display_name.split(',').slice(0, 3).join(', ');
+                    } catch (e) {}
+                    executeSubmit({ latitude: String(latitude), longitude: String(longitude), location_address });
+                },
+                () => executeSubmit(),
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        } else {
+            executeSubmit();
+        }
     };
 
     const handleDelete = async (id) => {
@@ -103,12 +132,30 @@ const WorkUpdatesPage = () => {
                                             <TableCell>{i + 1}</TableCell>
                                             <TableCell>{u.size ? <Chip label={u.size} size="small" /> : '-'}</TableCell>
                                             <TableCell>{u.model ? <Chip label={u.model} size="small" color="secondary" /> : '-'}</TableCell>
-                                            <TableCell><Typography variant="body2">{u.update_note || '-'}</Typography></TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">{u.update_note || '-'}</Typography>
+                                                {(u.location_address || u.latitude) && (
+                                                    <Box sx={{ mt: 0.5 }}>
+                                                        <Chip 
+                                                            icon={<Place sx={{ fontSize: '0.85rem !important', color: '#e53935' }} />} 
+                                                            label={u.location_address || `${u.latitude}, ${u.longitude}`} 
+                                                            size="small" 
+                                                            sx={{ bgcolor: '#ffebee', color: '#c62828', fontSize: '0.7rem', height: 20 }} 
+                                                        />
+                                                    </Box>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{u.updater?.name || '-'}</TableCell>
-                                            <TableCell>{formatDateTime(u.created_at)}</TableCell>
+                                            <TableCell>{u.update_date ? formatDate(u.update_date) : formatDateTime(u.created_at)}</TableCell>
                                             <TableCell align="center">
-                                                <Tooltip title="Edit"><IconButton size="small" onClick={() => handleOpen(u)} color="info"><Edit fontSize="small" /></IconButton></Tooltip>
-                                                <Tooltip title="Delete"><IconButton size="small" onClick={() => handleDelete(u.id)} color="error"><Delete fontSize="small" /></IconButton></Tooltip>
+                                                {user?.role !== 'staff' ? (
+                                                    <>
+                                                        <Tooltip title="Edit"><IconButton size="small" onClick={() => handleOpen(u)} color="info"><Edit fontSize="small" /></IconButton></Tooltip>
+                                                        <Tooltip title="Delete"><IconButton size="small" onClick={() => handleDelete(u.id)} color="error"><Delete fontSize="small" /></IconButton></Tooltip>
+                                                    </>
+                                                ) : (
+                                                    <Typography variant="caption" color="text.secondary">Locked</Typography>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -128,11 +175,12 @@ const WorkUpdatesPage = () => {
 
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>{editItem ? 'Edit Work Update' : 'Add Work Update'}</DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{ pt: '30px !important' }}>
                     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
                         <Grid item xs={6}><TextField fullWidth label="Size" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} /></Grid>
                         <Grid item xs={6}><TextField fullWidth label="Model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} /></Grid>
+                        <Grid item xs={12}><TextField fullWidth label="Update Date" type="date" value={form.update_date} onChange={(e) => setForm({ ...form, update_date: e.target.value })} InputLabelProps={{ shrink: true }} /></Grid>
                         <Grid item xs={12}><TextField fullWidth label="Update Note" multiline rows={3} value={form.update_note} onChange={(e) => setForm({ ...form, update_note: e.target.value })} /></Grid>
                     </Grid>
                 </DialogContent>

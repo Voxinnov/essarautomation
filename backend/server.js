@@ -12,7 +12,7 @@ const startServer = async () => {
 
         // Sync all models (alter in dev, no-sync in prod)
         if (process.env.NODE_ENV === 'development') {
-            await sequelize.sync({ alter: true });
+            await sequelize.sync({ alter: false });
             console.log('✅ Database synced successfully.');
 
             // Create default admin user if not exists
@@ -28,6 +28,14 @@ const startServer = async () => {
                 });
                 console.log('✅ Default admin created: admin@office.com / admin123');
             }
+
+            // Seed roles and permissions
+            const seedRoles = require('./scripts/seedRoles');
+            await seedRoles();
+
+            // Seed statuses
+            const seedStatuses = require('./seedStatuses');
+            await seedStatuses();
         }
 
         app.listen(PORT, () => {

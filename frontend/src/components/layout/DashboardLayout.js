@@ -4,37 +4,55 @@ import {
     Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
     IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
     Avatar, Menu, MenuItem, Chip, Tooltip, useTheme, useMediaQuery,
+    Collapse
 } from '@mui/material';
 import {
     Dashboard, Assignment, People, LocalHospital, MedicalServices,
     Update, AccessTime, Receipt, AttachMoney, Report, Settings,
     Menu as MenuIcon, Logout, AccountCircle, Notifications,
-    ChevronLeft, Business,
+    ChevronLeft, Business, Inventory, SupervisorAccount, AdminPanelSettings,
+    ExpandLess, ExpandMore, ListAlt, AccountBalance, Description
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
 const DRAWER_WIDTH = 260;
 
 const navItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-    { text: 'Tasks', icon: <Assignment />, path: '/tasks' },
-    { text: 'Clients', icon: <People />, path: '/clients' },
-    { text: 'Hospitals', icon: <LocalHospital />, path: '/hospitals' },
-    { text: 'Doctors', icon: <MedicalServices />, path: '/doctors' },
-    { text: 'Work Updates', icon: <Update />, path: '/work-updates' },
-    { text: 'Time Tracking', icon: <AccessTime />, path: '/time-tracking' },
-    { text: 'Billing', icon: <Receipt />, path: '/billing' },
-    { text: 'Expenses', icon: <AttachMoney />, path: '/expenses' },
-    { text: 'Reports', icon: <Report />, path: '/reports' },
-    { text: 'Settings', icon: <Settings />, path: '/settings' },
+    { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard', permission: 'dashboard_view' },
+    { text: 'Tasks', icon: <Assignment />, path: '/tasks', permission: 'tasks_view' },
+    { text: 'Clients', icon: <People />, path: '/clients', permission: 'clients_view' },
+    { text: 'Hospitals', icon: <LocalHospital />, path: '/hospitals', permission: 'hospitals_view' },
+    { text: 'Doctors', icon: <MedicalServices />, path: '/doctors', permission: 'doctors_view' },
+    { text: 'Work Updates', icon: <Update />, path: '/work-updates', permission: 'work_updates_view' },
+    { text: 'Time Tracking', icon: <AccessTime />, path: '/time-tracking', permission: 'time_tracking_view' },
+    { text: 'Billing', icon: <Receipt />, path: '/billing', permission: 'billing_view' },
+    { text: 'Proforma Invoices', icon: <Description />, path: '/proforma', permission: 'proforma_view' },
+    { text: 'Expenses', icon: <AttachMoney />, path: '/expenses', permission: 'expenses_view' },
+    { text: 'Stock Management', icon: <Inventory />, path: '/stock', permission: 'stock_view' },
+    { text: 'Reports', icon: <Report />, path: '/reports', permission: 'reports_view' },
+    { text: 'Users', icon: <SupervisorAccount />, path: '/users', permission: 'users_manage' },
+    { text: 'Roles', icon: <AdminPanelSettings />, path: '/role-management', permission: 'roles_manage' },
+    { 
+        text: 'Settings', 
+        icon: <Settings />, 
+        path: '/settings',
+        permission: 'settings_view',
+        children: [
+            { text: 'Profile', icon: <AccountCircle />, path: '/settings' },
+            { text: 'Status Management', icon: <ListAlt />, path: '/settings/status', adminOnly: true },
+            { text: 'Bank Accounts', icon: <AccountBalance />, path: '/settings/bank-accounts', adminOnly: true },
+        ]
+    },
 ];
+
 
 const DashboardLayout = ({ children }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
-    const { user, logout } = useAuth();
+    const [openSubMenu, setOpenSubMenu] = useState({}); // Tracking which submenu is open
+    const { user, logout, hasPermission } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -43,10 +61,76 @@ const DashboardLayout = ({ children }) => {
     const handleMenuClose = () => setAnchorEl(null);
     const handleLogout = () => { logout(); navigate('/login'); };
 
+    const toggleSubMenu = (text) => {
+        setOpenSubMenu(prev => ({ ...prev, [text]: !prev[text] }));
+    };
+
     const getRoleColor = (role) => ({ admin: 'error', manager: 'warning', staff: 'primary' })[role] || 'default';
 
+    const renderNavItem = (item, isChild = false) => {
+        if (item.adminOnly && user?.role !== 'admin') return null;
+        if (item.permission && !hasPermission(item.permission)) return null;
+
+        const hasChildren = item.children && item.children.length > 0;
+        // Filter out unauthorized children dynamically so parent container acts accordingly
+        const authorizedChildren = hasChildren 
+            ? item.children.filter(child => (!child.adminOnly || user?.role === 'admin') && (!child.permission || hasPermission(child.permission)))
+            : [];
+        
+        // If parent has children defined but all are unauthorized/hidden, suppress dropdown behavior or hide parent entirely if appropriate
+        const actuallyHasChildren = authorizedChildren.length > 0;
+
+        const isOpen = openSubMenu[item.text] || location.pathname.startsWith(item.path);
+        const isActive = location.pathname === item.path || (actuallyHasChildren && location.pathname.startsWith(item.path));
+
+        return (
+            <React.Fragment key={item.text}>
+                <ListItem disablePadding sx={{ mb: 0.3 }}>
+                    <ListItemButton
+                        onClick={() => {
+                            if (actuallyHasChildren) {
+                                toggleSubMenu(item.text);
+                            } else {
+                                navigate(item.path);
+                                if (isMobile) setMobileOpen(false);
+                            }
+                        }}
+                        sx={{
+                            borderRadius: 2,
+                            py: 1,
+                            pl: isChild ? 4 : 2,
+                            color: isActive ? (isChild ? 'white' : '#8a0303') : 'rgba(255,255,255,0.8)',
+                            bgcolor: isActive ? (isChild ? 'rgba(255,255,255,0.1)' : 'white') : 'transparent',
+                            '&:hover': { 
+                                bgcolor: isActive ? (isChild ? 'rgba(255,255,255,0.2)' : 'white') : 'rgba(255,255,255,0.1)', 
+                                color: isActive ? (isChild ? 'white' : '#8a0303') : 'white' 
+                            },
+                            transition: 'all 0.2s',
+                        }}
+                    >
+                        <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>{item.icon}</ListItemIcon>
+                        <ListItemText 
+                            primary={item.text} 
+                            primaryTypographyProps={{ fontSize: isChild ? '0.8rem' : '0.875rem', fontWeight: isActive ? 700 : 500 }} 
+                        />
+                        {actuallyHasChildren && (isOpen ? <ExpandLess /> : <ExpandMore />)}
+                        {isActive && !actuallyHasChildren && !isChild && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#8a0303' }} />}
+                    </ListItemButton>
+                </ListItem>
+                {actuallyHasChildren && (
+                    <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                            {authorizedChildren.map(child => renderNavItem(child, true))}
+                        </List>
+                    </Collapse>
+                )}
+            </React.Fragment>
+        );
+    };
+
     const drawer = (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, #8a0303 0%, #5a0000 100%)' }}>
+        <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+            {/* ... (keep branding and user profile sections) ... */}
             <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ width: 40, height: 40, borderRadius: 2, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg width="24" height="24" viewBox="0 0 100 100" fill="white">
@@ -78,28 +162,7 @@ const DashboardLayout = ({ children }) => {
             </Box>
 
             <List sx={{ flex: 1, px: 1.5, py: 0 }}>
-                {navItems.map((item) => {
-                    const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-                    return (
-                        <ListItem key={item.text} disablePadding sx={{ mb: 0.3 }}>
-                            <ListItemButton
-                                onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
-                                sx={{
-                                    borderRadius: 2,
-                                    py: 1,
-                                    color: isActive ? '#8a0303' : 'rgba(255,255,255,0.8)',
-                                    bgcolor: isActive ? 'white' : 'transparent',
-                                    '&:hover': { bgcolor: isActive ? 'white' : 'rgba(255,255,255,0.1)', color: isActive ? '#8a0303' : 'white' },
-                                    transition: 'all 0.2s',
-                                }}
-                            >
-                                <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>{item.icon}</ListItemIcon>
-                                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive ? 700 : 500 }} />
-                                {isActive && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#8a0303' }} />}
-                            </ListItemButton>
-                        </ListItem>
-                    );
-                })}
+                {navItems.map(item => renderNavItem(item))}
             </List>
 
             <Box sx={{ p: 2 }}>
@@ -123,13 +186,33 @@ const DashboardLayout = ({ children }) => {
                     open={mobileOpen}
                     onClose={handleDrawerToggle}
                     ModalProps={{ keepMounted: true }}
-                    sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', border: 'none' } }}
+                    PaperProps={{
+                        sx: {
+                            width: DRAWER_WIDTH,
+                            boxSizing: 'border-box',
+                            border: 'none',
+                            borderRadius: '0 !important',
+                            margin: '0 !important',
+                            height: '100% !important'
+                        }
+                    }}
+                    sx={{ display: { xs: 'block', md: 'none' } }}
                 >
                     {drawer}
                 </Drawer>
                 <Drawer
                     variant="permanent"
-                    sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', border: 'none' } }}
+                    PaperProps={{
+                        sx: {
+                            width: DRAWER_WIDTH,
+                            boxSizing: 'border-box',
+                            border: 'none',
+                            borderRadius: '0 !important',
+                            margin: '0 !important',
+                            height: '100% !important'
+                        }
+                    }}
+                    sx={{ display: { xs: 'none', md: 'block' } }}
                     open
                 >
                     {drawer}

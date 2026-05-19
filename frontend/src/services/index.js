@@ -6,6 +6,16 @@ export const authService = {
     getProfile: () => api.get('/auth/profile'),
     updateProfile: (data) => api.put('/auth/profile', data),
     getUsers: () => api.get('/auth/users'),
+    createUser: (data) => api.post('/auth/register', data), // Reuse register logic
+};
+
+export const roleService = {
+    getAll: () => api.get('/roles'),
+    getById: (id) => api.get(`/roles/${id}`),
+    create: (data) => api.post('/roles', data),
+    update: (id, data) => api.put(`/roles/${id}`, data),
+    delete: (id) => api.delete(`/roles/${id}`),
+    getPermissions: () => api.get('/roles/permissions'),
 };
 
 export const dashboardService = {
@@ -80,4 +90,46 @@ export const remarkService = {
     getByTask: (taskId) => api.get(`/remarks/task/${taskId}`),
     create: (data) => api.post('/remarks', data),
     delete: (id) => api.delete(`/remarks/${id}`),
+};
+
+export const stockService = {
+    getProducts: () => api.get('/stock/products'),
+    createProduct: (data) => api.post('/stock/products', data),
+    deleteProduct: (id) => api.delete(`/stock/products/${id}`),
+    getBrands: () => api.get('/stock/brands'),
+    getCategories: () => api.get('/stock/categories'),
+    createTransaction: (data) => api.post('/stock/transaction', data),
+    getTransactions: () => api.get('/stock/transactions'),
+    getDashboard: () => api.get('/stock/dashboard'),
+};
+
+export const statusService = {
+    getAll: () => api.get('/statuses/'),
+    create: (data) => api.post('/statuses/', data),
+    update: (id, data) => api.put(`/statuses/${id}/`, data),
+    delete: (id) => api.delete(`/statuses/${id}/`),
+};
+
+export const taskProductService = {
+    getByTask: (taskId) => api.get(`/tasks/${taskId}/products`),
+    create: (taskId, data) => api.post(`/tasks/${taskId}/products`, data),
+    getBackorders: () => api.get('/stock/backorders'),
+    resolveBackorders: () => api.post('/stock/backorders/resolve'),
+};
+
+export const proformaService = {
+    getDashboard: () => api.get('/proforma/dashboard'),
+    getAll: (params) => api.get('/proforma', { params }),
+    getById: (id) => api.get(`/proforma/${id}`),
+    create: (data) => api.post('/proforma', data),
+    update: (id, data) => api.put(`/proforma/${id}`, data),
+    delete: (id) => api.delete(`/proforma/${id}`),
+    convertToInvoice: (id) => api.post(`/proforma/${id}/convert`),
+};
+
+export const companyProfileService = {
+    get: () => api.get('/company-profile'),
+    update: (data) => api.put('/company-profile', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
 };

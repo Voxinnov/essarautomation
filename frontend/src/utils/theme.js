@@ -98,6 +98,17 @@ const theme = createTheme({
                 },
             },
         },
+        MuiDrawer: {
+            styleOverrides: {
+                paper: {
+                    borderRadius: '0 !important',
+                    background: 'linear-gradient(180deg, #8a0303 0%, #5a0000 100%) !important',
+                    border: 'none !important',
+                    height: '100% !important',
+                    margin: '0 !important',
+                },
+            },
+        },
     },
 });
 

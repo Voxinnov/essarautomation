@@ -6,8 +6,8 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions, Alert,
     Grid, Tooltip, InputAdornment,
 } from '@mui/material';
-import { Add, Edit, Delete, Visibility, Search, FilterList } from '@mui/icons-material';
-import { taskService, clientService, hospitalService, doctorService, authService } from '../../services';
+import { Add, Edit, Delete, Visibility, Search, FilterList, List } from '@mui/icons-material';
+import { taskService, clientService, hospitalService, doctorService, authService, stockService, statusService } from '../../services';
 import { TASK_STATUSES, TASK_PRIORITIES, formatDate } from '../../utils/constants';
 import StatusChip from '../../components/common/StatusChip';
 import PageHeader from '../../components/common/PageHeader';
@@ -33,8 +33,14 @@ const TasksPage = () => {
     const [hospitals, setHospitals] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [users, setUsers] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [dynamicStatuses, setDynamicStatuses] = useState([]);
+    const [isManualTitle, setIsManualTitle] = useState(false);
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [openClientDialog, setOpenClientDialog] = useState(false);
+    const [clientForm, setClientForm] = useState({ patient_name: '', phone: '', email: '', address: '' });
+    const [addingClient, setAddingClient] = useState(false);
     const navigate = useNavigate();
     const { user } = useAuth();
 
@@ -49,23 +55,50 @@ const TasksPage = () => {
         finally { setLoading(false); }
     }, [page, search, statusFilter, priorityFilter]);
 
-    useEffect(() => { fetchTasks(); }, [fetchTasks]);
-
-    useEffect(() => {
-        const loadDropdowns = async () => {
-            const [c, h, d, u] = await Promise.all([
+    const fetchDropdowns = useCallback(async () => {
+        try {
+            const [c, h, d, u, p, s] = await Promise.all([
                 clientService.getAll({ limit: 100 }),
                 hospitalService.getAll({ limit: 100 }),
                 doctorService.getAll({ limit: 100 }),
                 authService.getUsers(),
+                stockService.getProducts(),
+                statusService.getAll(),
             ]);
             setClients(c.data.data);
             setHospitals(h.data.data);
             setDoctors(d.data.data);
             setUsers(u.data.data);
-        };
-        loadDropdowns();
+            setProducts(p.data.data);
+            setDynamicStatuses(s.data.data);
+        } catch (err) { console.error(err); }
     }, []);
+
+    useEffect(() => { fetchTasks(); }, [fetchTasks]);
+    useEffect(() => { fetchDropdowns(); }, [fetchDropdowns]);
+
+    const handleQuickAddClient = async () => {
+        if (!clientForm.patient_name) return;
+        setAddingClient(true);
+        try {
+            const res = await clientService.create(clientForm);
+            const newClient = res.data.data; // Backend returns { success: true, data: client }
+            
+            // Refresh clients list
+            const updatedClients = await clientService.getAll({ limit: 100 });
+            setClients(updatedClients.data.data);
+            
+            // Select the new client in the task form
+            setForm(prev => ({ ...prev, client_id: newClient.id }));
+            
+            setOpenClientDialog(false);
+            setClientForm({ patient_name: '', phone: '', email: '', address: '' });
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to add client');
+        } finally {
+            setAddingClient(false);
+        }
+    };
 
     const handleOpen = (task = null) => {
         setEditTask(task);
@@ -76,6 +109,7 @@ const TasksPage = () => {
             status: task.status || 'pending', priority: task.priority || 'medium',
             due_date: task.due_date ? task.due_date.split('T')[0] : '',
         } : emptyForm);
+        setIsManualTitle(false);
         setError('');
         setOpenDialog(true);
     };
@@ -121,7 +155,7 @@ const TasksPage = () => {
                                 <InputLabel>Status</InputLabel>
                                 <Select value={statusFilter} label="Status" fullWidth onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
                                     <MenuItem value="">All</MenuItem>
-                                    {TASK_STATUSES.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                                    {dynamicStatuses.map(s => <MenuItem key={s.name} value={s.name}>{s.label}</MenuItem>)}
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -175,7 +209,7 @@ const TasksPage = () => {
                                         <TableCell>{task.hospital?.hospital_name || '-'}</TableCell>
                                         <TableCell>{task.assignee?.name || '-'}</TableCell>
                                         <TableCell><StatusChip status={task.priority} /></TableCell>
-                                        <TableCell><StatusChip status={task.status} /></TableCell>
+                                        <TableCell><StatusChip status={task.status} color={dynamicStatuses.find(s => s.name === task.status)?.color} /></TableCell>
                                         <TableCell>{formatDate(task.due_date)}</TableCell>
                                         <TableCell align="center">
                                             <Tooltip title="View Details">
@@ -216,65 +250,113 @@ const TasksPage = () => {
                     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
-                            <TextField fullWidth label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Title (Select Product)</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {isManualTitle ? (
+                                    <TextField fullWidth placeholder="Enter Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                                ) : (
+                                    <FormControl fullWidth required>
+                                        <Select
+                                            value={form.title}
+                                            displayEmpty
+                                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                        >
+                                            <MenuItem value=""><em>Select Product</em></MenuItem>
+                                            {products.map(prod => (
+                                                <MenuItem key={prod.id} value={prod.name}>{prod.name}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                )}
+                                <Tooltip title={isManualTitle ? "Select from Products" : "Enter Title Manually"}>
+                                    <IconButton 
+                                        onClick={() => { setIsManualTitle(!isManualTitle); setForm({ ...form, title: '' }); }} 
+                                        color="primary" 
+                                        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                                    >
+                                        {isManualTitle ? <List /> : <Add />}
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField fullWidth label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} multiline rows={3} />
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Description</Typography>
+                            <TextField fullWidth placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} multiline rows={3} />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel>Client</InputLabel>
-                                <Select value={form.client_id} label="Client" onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
-                                    <MenuItem value="">None</MenuItem>
-                                    {clients.map(c => <MenuItem key={c.id} value={c.id}>{c.patient_name}</MenuItem>)}
-                                </Select>
-                            </FormControl>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Client</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <FormControl fullWidth>
+                                    <Select value={form.client_id} displayEmpty onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
+                                        <MenuItem value="">None</MenuItem>
+                                        {clients.map(c => <MenuItem key={c.id} value={c.id}>{c.patient_name}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
+                                <Tooltip title="Add New Client">
+                                    <IconButton 
+                                        onClick={() => setOpenClientDialog(true)} 
+                                        color="primary" 
+                                        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                                    >
+                                        <Add />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
                         </Grid>
                         <Grid item xs={12} md={6}>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Hospital</Typography>
                             <FormControl fullWidth>
-                                <InputLabel>Hospital</InputLabel>
-                                <Select value={form.hospital_id} label="Hospital" fullWidth onChange={(e) => setForm({ ...form, hospital_id: e.target.value })}>
+                                <Select 
+                                    value={form.hospital_id} 
+                                    displayEmpty
+                                    fullWidth 
+                                    onChange={(e) => setForm({ ...form, hospital_id: e.target.value, doctor_id: '' })}
+                                >
                                     <MenuItem value="">None</MenuItem>
                                     {hospitals.map(h => <MenuItem key={h.id} value={h.id}>{h.hospital_name}</MenuItem>)}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} md={6}>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Doctor</Typography>
                             <FormControl fullWidth>
-                                <InputLabel>Doctor</InputLabel>
-                                <Select value={form.doctor_id} label="Doctor" onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
+                                <Select value={form.doctor_id} displayEmpty onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}>
                                     <MenuItem value="">None</MenuItem>
-                                    {doctors.map(d => <MenuItem key={d.id} value={d.id}>{d.doctor_name}</MenuItem>)}
+                                    {doctors
+                                        .filter(d => !form.hospital_id || d.hospital_id === form.hospital_id)
+                                        .map(d => <MenuItem key={d.id} value={d.id}>{d.doctor_name}</MenuItem>)
+                                    }
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} md={6}>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Assign To</Typography>
                             <FormControl fullWidth>
-                                <InputLabel>Assign To</InputLabel>
-                                <Select value={form.assigned_to} label="Assign To" onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
+                                <Select value={form.assigned_to} displayEmpty onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
                                     <MenuItem value="">Unassigned</MenuItem>
                                     {users.map(u => <MenuItem key={u.id} value={u.id}>{u.name} ({u.role})</MenuItem>)}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} md={4}>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Status</Typography>
                             <FormControl fullWidth>
-                                <InputLabel>Status</InputLabel>
-                                <Select value={form.status} label="Status" onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                                    {TASK_STATUSES.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                                <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                                    {dynamicStatuses.map(s => <MenuItem key={s.name} value={s.name}>{s.label}</MenuItem>)}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} md={4}>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Priority</Typography>
                             <FormControl fullWidth>
-                                <InputLabel>Priority</InputLabel>
-                                <Select value={form.priority} label="Priority" onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+                                <Select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
                                     {TASK_PRIORITIES.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <TextField fullWidth label="Due Date" type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} InputLabelProps={{ shrink: true }} />
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Due Date</Typography>
+                            <TextField fullWidth type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
                         </Grid>
                     </Grid>
                 </DialogContent>
@@ -282,6 +364,58 @@ const TasksPage = () => {
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
                     <Button variant="contained" onClick={handleSubmit} disabled={saving || !form.title}>
                         {saving ? 'Saving...' : editTask ? 'Update Task' : 'Create Task'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Quick Add Client Dialog */}
+            <Dialog open={openClientDialog} onClose={() => setOpenClientDialog(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Quick Add Client</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                        <Box>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Client/Patient Name</Typography>
+                            <TextField 
+                                fullWidth placeholder="Enter Name" 
+                                value={clientForm.patient_name} 
+                                onChange={(e) => setClientForm({ ...clientForm, patient_name: e.target.value })} 
+                                autoFocus
+                            />
+                        </Box>
+                        <Box>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Phone</Typography>
+                            <TextField 
+                                fullWidth placeholder="Phone Number" 
+                                value={clientForm.phone} 
+                                onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })} 
+                            />
+                        </Box>
+                        <Box>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Email</Typography>
+                            <TextField 
+                                fullWidth placeholder="Email Address" type="email"
+                                value={clientForm.email} 
+                                onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })} 
+                            />
+                        </Box>
+                        <Box>
+                            <Typography variant="caption" fontWeight={600} color="#546e7a" sx={{ mb: 0.5, display: 'block', ml: 0.5 }}>Address</Typography>
+                            <TextField 
+                                fullWidth placeholder="Address" multiline rows={2}
+                                value={clientForm.address} 
+                                onChange={(e) => setClientForm({ ...clientForm, address: e.target.value })} 
+                            />
+                        </Box>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenClientDialog(false)}>Cancel</Button>
+                    <Button 
+                        variant="contained" 
+                        onClick={handleQuickAddClient} 
+                        disabled={addingClient || !clientForm.patient_name}
+                    >
+                        {addingClient ? 'Adding...' : 'Add Client'}
                     </Button>
                 </DialogActions>
             </Dialog>

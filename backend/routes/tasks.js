@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { getTasks, createTask, getTask, updateTask, deleteTask } = require('../controllers/taskController');
-const { protect, authorize } = require('../middleware/auth');
+const { addTaskProduct, getTaskProducts } = require('../controllers/taskProductController');
+const { protect, hasPermission } = require('../middleware/auth');
 
-router.get('/', protect, getTasks);
-router.post('/', protect, createTask);
-router.get('/:id', protect, getTask);
-router.put('/:id', protect, updateTask);
-router.delete('/:id', protect, authorize('admin', 'manager'), deleteTask);
+router.use(protect);
+
+router.get('/', hasPermission('tasks_view'), getTasks);
+router.post('/', hasPermission('tasks_create'), createTask);
+router.get('/:id', hasPermission('tasks_view'), getTask);
+router.get('/:task_id/products', hasPermission('tasks_view'), getTaskProducts);
+router.post('/:task_id/products', hasPermission('tasks_edit'), addTaskProduct);
+router.put('/:id', hasPermission('tasks_edit'), updateTask);
+router.delete('/:id', hasPermission('tasks_delete'), deleteTask);
 
 module.exports = router;

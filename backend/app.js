@@ -36,11 +36,15 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
-// Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static files for uploads - served under /api/uploads to work through the Apache proxy
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // legacy fallback
+
+const roles = require('./routes/roles');
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/roles', roles);
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/clients', require('./routes/clients'));
@@ -50,7 +54,12 @@ app.use('/api/work-updates', require('./routes/workUpdates'));
 app.use('/api/time', require('./routes/time'));
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api/expenses', require('./routes/expenses'));
+app.use('/api/stock', require('./routes/stock'));
 app.use('/api/remarks', require('./routes/remarks'));
+app.use('/api/statuses', require('./routes/statuses'));
+app.use('/api/bank-accounts', require('./routes/bankAccounts'));
+app.use('/api/proforma', require('./routes/proforma'));
+app.use('/api/company-profile', require('./routes/companyProfile'));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -59,6 +68,7 @@ app.get('/api/health', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
+    console.log(`404: ${req.method} ${req.originalUrl}`);
     res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 

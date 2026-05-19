@@ -6,6 +6,7 @@ const Doctor = sequelize.define('Doctor', {
     doctor_name: { type: DataTypes.STRING, allowNull: false },
     department: { type: DataTypes.STRING },
     hospital_id: { type: DataTypes.INTEGER, references: { model: 'hospitals', key: 'id' } },
+    address: { type: DataTypes.TEXT },
     phone: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING, validate: { isEmail: true } },
 }, { tableName: 'doctors' });

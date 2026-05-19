@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { getDoctors, createDoctor, getDoctor, updateDoctor, deleteDoctor } = require('../controllers/doctorController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, hasPermission } = require('../middleware/auth');
 
-router.get('/', protect, getDoctors);
-router.post('/', protect, createDoctor);
-router.get('/:id', protect, getDoctor);
-router.put('/:id', protect, updateDoctor);
-router.delete('/:id', protect, authorize('admin', 'manager'), deleteDoctor);
+router.use(protect);
+
+router.get('/', hasPermission('doctors_view'), getDoctors);
+router.post('/', hasPermission('doctors_create'), createDoctor);
+router.get('/:id', hasPermission('doctors_view'), getDoctor);
+router.put('/:id', hasPermission('doctors_edit'), updateDoctor);
+router.delete('/:id', hasPermission('doctors_delete'), deleteDoctor);
 
 module.exports = router;

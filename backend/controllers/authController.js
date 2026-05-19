@@ -10,14 +10,14 @@ const generateToken = (id) => {
 // @access  Private (Admin only)
 const register = async (req, res, next) => {
     try {
-        const { name, email, password, phone, role } = req.body;
+        const { name, email, password, phone, role, roleId } = req.body;
 
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'Email already registered' });
         }
 
-        const user = await User.create({ name, email, password, phone, role });
+        const user = await User.create({ name, email, password, phone, role, roleId });
         const token = generateToken(user.id);
 
         res.status(201).json({ success: true, token, data: user });
@@ -37,7 +37,10 @@ const login = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Please provide email and password' });
         }
 
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ 
+            where: { email },
+            include: [{ model: require('../models').Role, as: 'roleData' }] 
+        });
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
@@ -52,7 +55,11 @@ const login = async (req, res, next) => {
         }
 
         const token = generateToken(user.id);
-        res.json({ success: true, token, data: user });
+        // Include the role's permissions explicitly for clear frontend handling
+        const permissions = user.roleData?.permissions || [];
+        // Inject permissions into returned user payload dynamically
+        const userData = { ...user.toJSON(), permissions };
+        res.json({ success: true, token, data: userData });
     } catch (error) {
         next(error);
     }
@@ -63,7 +70,12 @@ const login = async (req, res, next) => {
 // @access  Private
 const getProfile = async (req, res, next) => {
     try {
-        res.json({ success: true, data: req.user });
+        const user = await User.findByPk(req.user.id, {
+            include: [{ model: require('../models').Role, as: 'roleData' }]
+        });
+        const permissions = user?.roleData?.permissions || [];
+        const userData = { ...user?.toJSON(), permissions };
+        res.json({ success: true, data: userData });
     } catch (error) {
         next(error);
     }
@@ -91,7 +103,10 @@ const updateProfile = async (req, res, next) => {
 // @access  Private/Admin
 const getUsers = async (req, res, next) => {
     try {
-        const users = await User.findAll({ order: [['created_at', 'DESC']] });
+        const users = await User.findAll({ 
+            include: [{ model: require('../models').Role, as: 'roleData' }],
+            order: [['createdAt', 'DESC']] // Updated field name
+        });
         res.json({ success: true, count: users.length, data: users });
     } catch (error) {
         next(error);

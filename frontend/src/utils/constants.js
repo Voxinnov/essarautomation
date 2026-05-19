@@ -51,6 +51,8 @@ export const getStatusColor = (status) => {
     const statusMap = {
         pending: 'warning', in_progress: 'info', completed: 'success', on_hold: 'default',
         paid: 'success', low: 'success', medium: 'warning', high: 'error', urgent: 'error',
+        Draft: 'default', Sent: 'info', Approved: 'success', Expired: 'error', 
+        'Converted to Invoice': 'success'
     };
     return statusMap[status] || 'default';
 };

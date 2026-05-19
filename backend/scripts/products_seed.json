@@ -1,0 +1,224 @@
+[
+  {
+    "brand": "NoWound",
+    "category": "NPWT",
+    "products": [
+      { "name": "NPWT Dressing Kit - Small", "product_code": "NW-DK-S", "hsn_code": "9018", "units_per_box": 1, "mrp": 6500.00, "ptr": 5200.00, "tax_rate": 12 },
+      { "name": "NPWT Dressing Kit - Medium", "product_code": "NW-DK-M", "hsn_code": "9018", "units_per_box": 1, "mrp": 7500.00, "ptr": 6000.00, "tax_rate": 12 },
+      { "name": "NPWT Dressing Kit - Large", "product_code": "NW-DK-L", "hsn_code": "9018", "units_per_box": 1, "mrp": 8500.00, "ptr": 6800.00, "tax_rate": 12 },
+      { "name": "NPWT Canister 600 ML", "product_code": "NW-CAN-600", "hsn_code": "9018", "units_per_box": 1, "mrp": 3500.00, "ptr": 2800.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Velox care",
+    "category": "Oxygen Therapy",
+    "products": [
+      { "name": "Topical Warm Oxygen Therapy Bag", "product_code": "VC-TWOTB", "hsn_code": "9018", "units_per_box": 1, "mrp": 12000.00, "ptr": 9600.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Axiostat",
+    "category": "Hemostat",
+    "products": [
+      { "name": "Axiostat Military 8x8", "product_code": "AX-MIL-88", "hsn_code": "3005", "units_per_box": 1, "mrp": 3500.00, "ptr": 2800.00, "tax_rate": 12 },
+      { "name": "Axiostat Military 5x5", "product_code": "AX-MIL-55", "hsn_code": "3005", "units_per_box": 1, "mrp": 2500.00, "ptr": 2000.00, "tax_rate": 12 },
+      { "name": "Axiostat Surgical 8x8", "product_code": "AX-SUR-88", "hsn_code": "3005", "units_per_box": 1, "mrp": 3000.00, "ptr": 2400.00, "tax_rate": 12 },
+      { "name": "Axiostat Surgical 5x5", "product_code": "AX-SUR-55", "hsn_code": "3005", "units_per_box": 1, "mrp": 2000.00, "ptr": 1600.00, "tax_rate": 12 },
+      { "name": "Axiostat Dental 1x1", "product_code": "AX-DEN-11", "hsn_code": "3005", "units_per_box": 1, "mrp": 500.00, "ptr": 400.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Biofil",
+    "category": "Wound Care",
+    "products": [
+      { "name": "Biofil 2x2", "product_code": "BF-22", "hsn_code": "3005", "units_per_box": 5, "mrp": 450.00, "ptr": 360.00, "tax_rate": 12 },
+      { "name": "Biofil 4x4", "product_code": "BF-44", "hsn_code": "3005", "units_per_box": 5, "mrp": 850.00, "ptr": 680.00, "tax_rate": 12 },
+      { "name": "Biofil 6x6", "product_code": "BF-66", "hsn_code": "3005", "units_per_box": 5, "mrp": 1250.00, "ptr": 1000.00, "tax_rate": 12 },
+      { "name": "Biofil 10x10", "product_code": "BF-1010", "hsn_code": "3005", "units_per_box": 5, "mrp": 2250.00, "ptr": 1800.00, "tax_rate": 12 },
+      { "name": "Biofil Particles 10ml", "product_code": "BFPP 1003", "hsn_code": "30061010", "units_per_box": 2, "mrp": 715.00, "ptr": 544.76, "tax_rate": 5 },
+      { "name": "Biofil Particles 5ml", "product_code": "BFPP 1002", "hsn_code": "30061010", "units_per_box": 5, "mrp": 408.00, "ptr": 310.86, "tax_rate": 5 },
+      { "name": "Biofil Sponge 10x10cm", "product_code": "BFPS 1002", "hsn_code": "30061010", "units_per_box": 5, "mrp": 827.00, "ptr": 630.10, "tax_rate": 5 },
+      { "name": "Biofil Sponge 5x5cm", "product_code": "BFPS 1001", "hsn_code": "30061010", "units_per_box": 5, "mrp": 319.00, "ptr": 243.05, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Hydrofil",
+    "category": "Wound Care",
+    "products": [
+      { "name": "Hydrofil 2x2", "product_code": "HF-22", "hsn_code": "3005", "units_per_box": 5, "mrp": 550.00, "ptr": 440.00, "tax_rate": 12 },
+      { "name": "Hydrofil 4x4", "product_code": "HF-44", "hsn_code": "3005", "units_per_box": 5, "mrp": 1050.00, "ptr": 840.00, "tax_rate": 12 },
+      { "name": "Hydrofil 6x6", "product_code": "HF-66", "hsn_code": "3005", "units_per_box": 5, "mrp": 1550.00, "ptr": 1240.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Surgifill",
+    "category": "Hemostat",
+    "products": [
+      { "name": "Surgifill 10ml", "product_code": "SF-10", "hsn_code": "300610", "units_per_box": 1, "mrp": 950.00, "ptr": 760.00, "tax_rate": 12 },
+      { "name": "Surgifill 5ml", "product_code": "SF-5", "hsn_code": "300610", "units_per_box": 1, "mrp": 550.00, "ptr": 440.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Dermifill",
+    "category": "Hemostat",
+    "products": [
+      { "name": "Dermifill 10ml", "product_code": "DF-10", "hsn_code": "300610", "units_per_box": 1, "mrp": 1150.00, "ptr": 920.00, "tax_rate": 12 },
+      { "name": "Dermifill 5ml", "product_code": "DF-5", "hsn_code": "300610", "units_per_box": 1, "mrp": 650.00, "ptr": 520.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Collafill",
+    "category": "Hemostat",
+    "products": [
+      { "name": "Collafill 10ml", "product_code": "CF-10", "hsn_code": "300610", "units_per_box": 1, "mrp": 1350.00, "ptr": 1080.00, "tax_rate": 12 },
+      { "name": "Collafill 5ml", "product_code": "CF-5", "hsn_code": "300610", "units_per_box": 1, "mrp": 750.00, "ptr": 600.00, "tax_rate": 12 }
+    ]
+  },
+  {
+    "brand": "Biofil-AB",
+    "category": "Wound Care",
+    "products": [
+      { "name": "Biofil-AB Particles 10ml", "product_code": "BMPP 1003", "hsn_code": "30051090", "units_per_box": 2, "mrp": 1060.00, "ptr": 807.62, "tax_rate": 5 },
+      { "name": "Biofil-AB Particles 5ml", "product_code": "BMPP 1002", "hsn_code": "30051090", "units_per_box": 5, "mrp": 584.00, "ptr": 444.95, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Gelspon",
+    "category": "Surgical Hemostat",
+    "products": [
+      { "name": "Gelspon Dental 10x10x10mm", "product_code": "GSES 1013", "hsn_code": "30061020", "units_per_box": 100, "mrp": 17.00, "ptr": 12.95, "tax_rate": 5 },
+      { "name": "Gelspon-P Standard-80x50x10mm", "product_code": "GSPS 1002", "hsn_code": "30061020", "units_per_box": 10, "mrp": 258.00, "ptr": 196.57, "tax_rate": 5 },
+      { "name": "Gelspon-P Dental-10x10x10mm", "product_code": "GSPS 1013", "hsn_code": "30061020", "units_per_box": 100, "mrp": 19.00, "ptr": 14.48, "tax_rate": 5 },
+      { "name": "Gelspon-P Anal 80xdia30mm", "product_code": "GSPS 1008", "hsn_code": "30061020", "units_per_box": 5, "mrp": 486.00, "ptr": 370.29, "tax_rate": 5 },
+      { "name": "Gelspon-P Film 200x70x0.5mm", "product_code": "GSPS 1021", "hsn_code": "30061020", "units_per_box": 10, "mrp": 284.00, "ptr": 216.36, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Kollagen",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Kollagen 10x20cm", "product_code": "KGNS 1007", "hsn_code": "30061010", "units_per_box": 2, "mrp": 806.00, "ptr": 614.10, "tax_rate": 5 },
+      { "name": "Kollagen 10x10cm", "product_code": "KGNS 1005", "hsn_code": "30061010", "units_per_box": 5, "mrp": 410.00, "ptr": 312.38, "tax_rate": 5 },
+      { "name": "Kollagen 15x30cm", "product_code": "KGNS 1011", "hsn_code": "30061010", "units_per_box": 2, "mrp": 1779.00, "ptr": 1355.43, "tax_rate": 5 },
+      { "name": "Kollagen 20x40cm", "product_code": "KGNS 1014", "hsn_code": "30061010", "units_per_box": 2, "mrp": 2694.00, "ptr": 2052.57, "tax_rate": 5 },
+      { "name": "Kollagen 5x5cm", "product_code": "KGNS 1001", "hsn_code": "30061010", "units_per_box": 5, "mrp": 155.00, "ptr": 118.10, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Neuskin",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Neuskin 10x10cm", "product_code": "NSND 1002", "hsn_code": "30061010", "units_per_box": 5, "mrp": 428.00, "ptr": 326.10, "tax_rate": 5 },
+      { "name": "Neuskin 10x20cm", "product_code": "NSND 1004", "hsn_code": "30061010", "units_per_box": 5, "mrp": 844.00, "ptr": 643.05, "tax_rate": 5 },
+      { "name": "Neuskin 15x30cm", "product_code": "NSND 1006", "hsn_code": "30061010", "units_per_box": 5, "mrp": 1861.00, "ptr": 1417.90, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Kollagen-D",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Kollagen-D 10x10cm", "product_code": "KGDS 1001", "hsn_code": "30061010", "units_per_box": 5, "mrp": 495.00, "ptr": 377.14, "tax_rate": 5 },
+      { "name": "Kollagen-D 6\"x8\"", "product_code": "KGDS 1009", "hsn_code": "30061010", "units_per_box": 2, "mrp": 1206.00, "ptr": 918.86, "tax_rate": 5 },
+      { "name": "Kollagen-D 8\"x12\"", "product_code": "KGDS 1011", "hsn_code": "30061010", "units_per_box": 2, "mrp": 2768.00, "ptr": 2108.95, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Kollagen-M",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Kollagen-M 10x10cm", "product_code": "KGMS 1002", "hsn_code": "30061010", "units_per_box": 5, "mrp": 404.00, "ptr": 307.81, "tax_rate": 5 },
+      { "name": "Kollagen-M 10x20cm", "product_code": "KGMS 1003", "hsn_code": "30061010", "units_per_box": 2, "mrp": 798.00, "ptr": 608.00, "tax_rate": 5 },
+      { "name": "Kollagen-M 15x30cm", "product_code": "KGMS 1005", "hsn_code": "30061010", "units_per_box": 2, "mrp": 1779.00, "ptr": 1355.43, "tax_rate": 5 },
+      { "name": "Kollagen-M 20x40cm", "product_code": "KGMS 1006", "hsn_code": "30061010", "units_per_box": 2, "mrp": 2694.00, "ptr": 2052.57, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Lysil",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Lysil 10x10cm", "product_code": "LSFF 1004", "hsn_code": "30051090", "units_per_box": 1, "mrp": 2333.00, "ptr": 1777.52, "tax_rate": 5 },
+      { "name": "Lysil 20x20cm", "product_code": "LSFF 1005", "hsn_code": "30051090", "units_per_box": 1, "mrp": 8479.00, "ptr": 6460.19, "tax_rate": 5 },
+      { "name": "Lysil 40x40cm", "product_code": "LSFF 1007", "hsn_code": "30051090", "units_per_box": 1, "mrp": 28768.00, "ptr": 21918.48, "tax_rate": 5 },
+      { "name": "Lysil 5x5cm", "product_code": "LSFF 1003", "hsn_code": "30051090", "units_per_box": 5, "mrp": 681.00, "ptr": 518.86, "tax_rate": 5 },
+      { "name": "Lysil Gel - 10gm", "product_code": "LSLG 1001", "hsn_code": "30051090", "units_per_box": 10, "mrp": 941.00, "ptr": 716.95, "tax_rate": 5 },
+      { "name": "Lysil 12x6cm", "product_code": "LSFF 1009", "hsn_code": "30051090", "units_per_box": 3, "mrp": 1679.00, "ptr": 1279.24, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Neuskin-F",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Neuskin-F 10x10cm", "product_code": "NSNF 1005", "hsn_code": "30061010", "units_per_box": 5, "mrp": 790.00, "ptr": 601.90, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Periocol-GTR",
+    "category": "GTR Membrane",
+    "products": [
+      { "name": "Periocol-GTR 25x30mm", "product_code": "PGMS 1001", "hsn_code": "30061010", "units_per_box": 5, "mrp": 1787.00, "ptr": 1361.52, "tax_rate": 5 },
+      { "name": "Periocol-GTR 15x15mm", "product_code": "PGMS 1002", "hsn_code": "30061010", "units_per_box": 5, "mrp": 1378.00, "ptr": 1049.90, "tax_rate": 5 },
+      { "name": "Periocol-GTR 10x18mm", "product_code": "PGMS 1003", "hsn_code": "30061010", "units_per_box": 5, "mrp": 984.00, "ptr": 749.71, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Sybograf",
+    "category": "Bone Graft",
+    "products": [
+      { "name": "Sybograf - Plus (600-700 Microns) 0.5gms", "product_code": "SGPP 1002", "hsn_code": "30064000", "units_per_box": 4, "mrp": 866.00, "ptr": 659.81, "tax_rate": 5 },
+      { "name": "Sybograf (600-700 Microns) 0.5gms", "product_code": "SGFP 1003", "hsn_code": "30064000", "units_per_box": 4, "mrp": 866.00, "ptr": 659.81, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Urgo",
+    "category": "Wound Care",
+    "products": [
+      { "name": "Urgo Clean Ag 10x10cm", "product_code": "600411", "hsn_code": "30051090", "units_per_box": 10, "mrp": 804.00, "ptr": 612.57, "tax_rate": 5 },
+      { "name": "Urgo Clean Ag 15x20cm", "product_code": "600412", "hsn_code": "30051090", "units_per_box": 5, "mrp": 1856.00, "ptr": 1414.10, "tax_rate": 5 },
+      { "name": "Urgo Clean Ag 6x6cm", "product_code": "600083", "hsn_code": "30051090", "units_per_box": 10, "mrp": 485.00, "ptr": 369.52, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Urgostart",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Urgostart Border 15x20cm", "product_code": "601393", "hsn_code": "30051020", "units_per_box": 10, "mrp": 2391.00, "ptr": 1821.71, "tax_rate": 5 },
+      { "name": "Urgostart Border 8x8cm", "product_code": "601392", "hsn_code": "30051020", "units_per_box": 10, "mrp": 797.00, "ptr": 607.24, "tax_rate": 5 },
+      { "name": "Urgostart Border Sacrum 20x20cm", "product_code": "601394", "hsn_code": "30051020", "units_per_box": 5, "mrp": 2991.00, "ptr": 2278.86, "tax_rate": 5 },
+      { "name": "Urgostart Border 10x10cm", "product_code": "601434", "hsn_code": "30051020", "units_per_box": 10, "mrp": 1289.00, "ptr": 982.10, "tax_rate": 5 },
+      { "name": "Urgostart Contact 10x10cm", "product_code": "754129", "hsn_code": "30051090", "units_per_box": 10, "mrp": 712.00, "ptr": 542.48, "tax_rate": 5 },
+      { "name": "Urgostart Contact 15x20cm", "product_code": "754157", "hsn_code": "30051090", "units_per_box": 10, "mrp": 1753.00, "ptr": 1335.62, "tax_rate": 5 },
+      { "name": "Urgostart Contact 5x7cm", "product_code": "754122", "hsn_code": "30051090", "units_per_box": 10, "mrp": 454.00, "ptr": 345.90, "tax_rate": 5 },
+      { "name": "Urgostart Micro Adhesive 10x10cm(MDD)", "product_code": "601598", "hsn_code": "30051090", "units_per_box": 10, "mrp": 984.00, "ptr": 749.71, "tax_rate": 5 },
+      { "name": "Urgostart Micro Adhesive 15x20cm", "product_code": "601599", "hsn_code": "30051090", "units_per_box": 10, "mrp": 2109.00, "ptr": 1606.86, "tax_rate": 5 },
+      { "name": "Urgostart Micro Adhesive 6x6cm", "product_code": "601597", "hsn_code": "30051090", "units_per_box": 10, "mrp": 701.00, "ptr": 534.10, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Urgotul",
+    "category": "Advanced Dressing",
+    "products": [
+      { "name": "Urgotul 10x10cm", "product_code": "552512", "hsn_code": "30051090", "units_per_box": 10, "mrp": 136.00, "ptr": 103.62, "tax_rate": 5 },
+      { "name": "Urgotul 15x20cm", "product_code": "552513", "hsn_code": "30051090", "units_per_box": 10, "mrp": 385.00, "ptr": 293.33, "tax_rate": 5 },
+      { "name": "Urgotul 20x30cm", "product_code": "552514", "hsn_code": "30051090", "units_per_box": 5, "mrp": 617.00, "ptr": 470.10, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border 10x25cm", "product_code": "552520", "hsn_code": "30051090", "units_per_box": 10, "mrp": 938.00, "ptr": 714.67, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border 13x13cm", "product_code": "552519", "hsn_code": "30051020", "units_per_box": 10, "mrp": 656.00, "ptr": 499.81, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border 15x20cm", "product_code": "552518", "hsn_code": "30051020", "units_per_box": 10, "mrp": 1031.00, "ptr": 785.52, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border 6.5x10cm", "product_code": "552517", "hsn_code": "30051020", "units_per_box": 10, "mrp": 422.00, "ptr": 321.52, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border 8x8cm", "product_code": "552521", "hsn_code": "30051020", "units_per_box": 10, "mrp": 300.00, "ptr": 228.57, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border 8x15cm(MDD)", "product_code": "552515", "hsn_code": "30051090", "units_per_box": 10, "mrp": 609.00, "ptr": 464.00, "tax_rate": 5 },
+      { "name": "Urgotul Absorb Border Sacrum 20x20cm", "product_code": "552516", "hsn_code": "30051020", "units_per_box": 5, "mrp": 1125.00, "ptr": 857.14, "tax_rate": 5 },
+      { "name": "Urgotul Ag Silver 10x12cm", "product_code": "552510", "hsn_code": "30051090", "units_per_box": 16, "mrp": 283.00, "ptr": 215.62, "tax_rate": 5 },
+      { "name": "Urgotul Ag Silver 15x20cm", "product_code": "552511", "hsn_code": "30051090", "units_per_box": 16, "mrp": 710.00, "ptr": 540.95, "tax_rate": 5 },
+      { "name": "Urgotul Ag Silver 20x40cm", "product_code": "601255", "hsn_code": "30051090", "units_per_box": 5, "mrp": 2609.00, "ptr": 1987.81, "tax_rate": 5 }
+    ]
+  },
+  {
+    "brand": "Sanyrene",
+    "category": "Skin Care",
+    "products": [
+      { "name": "Sanyrene-10ml", "product_code": "604054", "hsn_code": "33049990", "units_per_box": 1, "mrp": 480.00, "ptr": 325.42, "tax_rate": 18 },
+      { "name": "Sanyrene-20ml", "product_code": "604055", "hsn_code": "33049990", "units_per_box": 1, "mrp": 690.00, "ptr": 467.80, "tax_rate": 18 },
+      { "name": "Sanyrene-50ml", "product_code": "604056", "hsn_code": "33049990", "units_per_box": 1, "mrp": 1390.00, "ptr": 942.37, "tax_rate": 18 }
+    ]
+  }
+]

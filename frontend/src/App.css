@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+
+.MuiDrawer-paper {
+  border-radius: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+  border: none !important;
+}
