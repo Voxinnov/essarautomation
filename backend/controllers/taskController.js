@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Task, Client, Hospital, Doctor, User } = require('../models');
+const { Task, Client, Hospital, Doctor, User, Role } = require('../models');
 
 // @desc    Get all tasks with filters and pagination
 // @route   GET /api/tasks
@@ -127,4 +127,42 @@ const deleteTask = async (req, res, next) => {
     }
 };
 
-module.exports = { getTasks, createTask, getTask, updateTask, deleteTask };
+// @desc    Get form options (clients, hospitals, doctors, staff users) - accessible to all with tasks_view
+// @route   GET /api/tasks/options
+// @access  Private (tasks_view)
+const getTaskOptions = async (req, res, next) => {
+    try {
+        const [clients, hospitals, doctors, users] = await Promise.all([
+            Client.findAll({
+                attributes: ['id', 'patient_name', 'phone'],
+                order: [['patient_name', 'ASC']],
+                limit: 500,
+            }),
+            Hospital.findAll({
+                attributes: ['id', 'hospital_name', 'location'],
+                order: [['hospital_name', 'ASC']],
+                limit: 500,
+            }),
+            Doctor.findAll({
+                attributes: ['id', 'doctor_name', 'department', 'hospital_id'],
+                order: [['doctor_name', 'ASC']],
+                limit: 500,
+            }),
+            User.findAll({
+                attributes: ['id', 'name', 'email', 'role'],
+                where: { status: 'active' },
+                order: [['name', 'ASC']],
+                limit: 200,
+            }),
+        ]);
+
+        res.json({
+            success: true,
+            data: { clients, hospitals, doctors, users },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { getTasks, createTask, getTask, updateTask, deleteTask, getTaskOptions };
