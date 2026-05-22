@@ -6,7 +6,7 @@ const sequelize = require('../config/database');
 // @route   POST /api/time/start
 const startTimer = async (req, res, next) => {
     try {
-        const { task_id, description } = req.body;
+        const { task_id, description, latitude, longitude, address } = req.body;
         // Check if there's already an active timer
         const active = await TimeLog.findOne({
             where: { user_id: req.user.id, end_time: null },
@@ -16,6 +16,9 @@ const startTimer = async (req, res, next) => {
         }
         const log = await TimeLog.create({
             task_id, user_id: req.user.id, start_time: new Date(), description, is_manual: false,
+            start_latitude: latitude || null,
+            start_longitude: longitude || null,
+            start_address: address || null,
         });
         res.status(201).json({ success: true, data: log });
     } catch (error) { next(error); }
@@ -25,13 +28,20 @@ const startTimer = async (req, res, next) => {
 // @route   POST /api/time/stop/:id
 const stopTimer = async (req, res, next) => {
     try {
+        const { latitude, longitude, address } = req.body || {};
         const log = await TimeLog.findByPk(req.params.id);
         if (!log) return res.status(404).json({ success: false, message: 'Time log not found' });
         if (log.user_id !== req.user.id) return res.status(403).json({ success: false, message: 'Not authorized' });
 
         const endTime = new Date();
         const totalHours = ((endTime - new Date(log.start_time)) / (1000 * 60 * 60)).toFixed(2);
-        await log.update({ end_time: endTime, total_hours: totalHours });
+        await log.update({
+            end_time: endTime,
+            total_hours: totalHours,
+            stop_latitude: latitude || null,
+            stop_longitude: longitude || null,
+            stop_address: address || null,
+        });
         res.json({ success: true, data: log });
     } catch (error) { next(error); }
 };

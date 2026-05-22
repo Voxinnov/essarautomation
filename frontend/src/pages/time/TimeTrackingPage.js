@@ -1,15 +1,61 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Button, TextField, Typography, Pagination, Dialog, DialogTitle, DialogContent, DialogActions,
-    Alert, Grid, Chip, Tooltip, InputAdornment, Divider, LinearProgress,
-    MenuItem, Select, FormControl, InputLabel,
+    Button, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions,
+    Alert, Grid, Chip, Tooltip,
+    MenuItem, Select, FormControl, InputLabel, CircularProgress,
 } from '@mui/material';
-import { PlayArrow, Stop, Add, AccessTime } from '@mui/icons-material';
+import { PlayArrow, Stop, Add, AccessTime, LocationOn } from '@mui/icons-material';
 import { timeService, taskService } from '../../services';
 import { formatDateTime } from '../../utils/constants';
 import PageHeader from '../../components/common/PageHeader';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+
+/**
+ * Gets the user's current geolocation (latitude, longitude) via browser API.
+ * Returns { latitude, longitude } or null if unavailable/denied.
+ */
+const getCurrentLocation = () => {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve(null);
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                });
+            },
+            () => {
+                // User denied or error — resolve null, don't block the action
+                resolve(null);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    });
+};
+
+/**
+ * Reverse geocode coordinates to a human-readable address using Nominatim (OpenStreetMap).
+ * Returns the address string or a coordinate fallback.
+ */
+const reverseGeocode = async (latitude, longitude) => {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+        );
+        const data = await response.json();
+        if (data && data.display_name) {
+            return data.display_name;
+        }
+    } catch (e) {
+        // Fallback to coordinates if reverse geocode fails
+    }
+    return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+};
 
 const TimeTrackingPage = () => {
     const [logs, setLogs] = useState([]);
@@ -22,6 +68,7 @@ const TimeTrackingPage = () => {
     const [openManual, setOpenManual] = useState(false);
     const [manualForm, setManualForm] = useState({ task_id: '', start_time: '', end_time: '', description: '' });
     const [error, setError] = useState('');
+    const [locationLoading, setLocationLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -32,14 +79,14 @@ const TimeTrackingPage = () => {
             ]);
             setLogs(logsRes.data.data);
             setActiveLog(activeRes.data.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { /* Error handled silently */ }
         finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
     useEffect(() => {
-        taskService.getAll({ limit: 100 }).then(r => setTasks(r.data.data)).catch(console.error);
+        taskService.getAll({ limit: 100 }).then(r => setTasks(r.data.data)).catch(() => {});
     }, []);
 
     // Elapsed timer
@@ -63,20 +110,46 @@ const TimeTrackingPage = () => {
     const handleStart = async () => {
         if (!selectedTask) { setError('Please select a task'); return; }
         setError('');
+        setLocationLoading(true);
         try {
-            await timeService.start({ task_id: selectedTask, description });
+            // Get current location
+            const location = await getCurrentLocation();
+            let address = null;
+            if (location) {
+                address = await reverseGeocode(location.latitude, location.longitude);
+            }
+            await timeService.start({
+                task_id: selectedTask,
+                description,
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+                address,
+            });
             setDescription('');
             fetchData();
         } catch (err) { setError(err.response?.data?.message || 'Failed to start timer'); }
+        finally { setLocationLoading(false); }
     };
 
     const handleStop = async () => {
         if (!activelog) return;
+        setLocationLoading(true);
         try {
-            await timeService.stop(activelog.id);
+            // Get current location
+            const location = await getCurrentLocation();
+            let address = null;
+            if (location) {
+                address = await reverseGeocode(location.latitude, location.longitude);
+            }
+            await timeService.stop(activelog.id, {
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+                address,
+            });
             setElapsed(0);
             fetchData();
         } catch (err) { setError('Failed to stop timer'); }
+        finally { setLocationLoading(false); }
     };
 
     const handleManualEntry = async () => {
@@ -86,6 +159,29 @@ const TimeTrackingPage = () => {
             setManualForm({ task_id: '', start_time: '', end_time: '', description: '' });
             fetchData();
         } catch (err) { setError(err.response?.data?.message || 'Failed to add entry'); }
+    };
+
+    const renderLocation = (lat, lng, address) => {
+        if (!lat && !lng) return <Typography variant="body2" color="text.secondary">—</Typography>;
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        const displayText = address || `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+        return (
+            <Tooltip title={displayText} arrow placement="top">
+                <Chip
+                    icon={<LocationOn sx={{ fontSize: 14 }} />}
+                    label={displayText.length > 30 ? displayText.substring(0, 30) + '…' : displayText}
+                    size="small"
+                    variant="outlined"
+                    color="info"
+                    component="a"
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    clickable
+                    sx={{ maxWidth: 200, fontSize: '0.7rem' }}
+                />
+            </Tooltip>
+        );
     };
 
     return (
@@ -105,15 +201,27 @@ const TimeTrackingPage = () => {
                                     <Typography variant="h2" fontWeight={700} fontFamily="monospace">
                                         {formatElapsed(elapsed)}
                                     </Typography>
-                                    <Button
-                                        variant="contained"
-                                        size="large"
-                                        startIcon={<Stop />}
-                                        onClick={handleStop}
-                                        sx={{ mt: 2, bgcolor: '#ef5350', '&:hover': { bgcolor: '#c62828' } }}
-                                    >
-                                        Stop Timer
-                                    </Button>
+                                    {activelog.start_address && (
+                                        <Chip
+                                            icon={<LocationOn sx={{ color: 'rgba(255,255,255,0.7) !important' }} />}
+                                            label={`Started at: ${activelog.start_address.length > 50 ? activelog.start_address.substring(0, 50) + '…' : activelog.start_address}`}
+                                            size="small"
+                                            sx={{ mt: 1, color: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.3)', fontSize: '0.7rem' }}
+                                            variant="outlined"
+                                        />
+                                    )}
+                                    <Box sx={{ mt: 2 }}>
+                                        <Button
+                                            variant="contained"
+                                            size="large"
+                                            startIcon={locationLoading ? <CircularProgress size={20} color="inherit" /> : <Stop />}
+                                            onClick={handleStop}
+                                            disabled={locationLoading}
+                                            sx={{ bgcolor: '#ef5350', '&:hover': { bgcolor: '#c62828' } }}
+                                        >
+                                            {locationLoading ? 'Getting Location…' : 'Stop Timer'}
+                                        </Button>
+                                    </Box>
                                 </Box>
                             ) : (
                                 <Box>
@@ -134,11 +242,22 @@ const TimeTrackingPage = () => {
                                             <TextField fullWidth label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
                                         </Grid>
                                         <Grid item xs={12} md={2} sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Button fullWidth variant="contained" size="large" startIcon={<PlayArrow />} onClick={handleStart} sx={{ py: 1.8 }}>
-                                                Start
+                                            <Button
+                                                fullWidth
+                                                variant="contained"
+                                                size="large"
+                                                startIcon={locationLoading ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
+                                                onClick={handleStart}
+                                                disabled={locationLoading}
+                                                sx={{ py: 1.8 }}
+                                            >
+                                                {locationLoading ? 'Locating…' : 'Start'}
                                             </Button>
                                         </Grid>
                                     </Grid>
+                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <LocationOn sx={{ fontSize: 14 }} /> Your location will be auto-saved on start & stop
+                                    </Typography>
                                 </Box>
                             )}
                         </Grid>
@@ -163,12 +282,14 @@ const TimeTrackingPage = () => {
                                     <TableCell>End Time</TableCell>
                                     <TableCell>Hours</TableCell>
                                     <TableCell>Type</TableCell>
+                                    <TableCell>Start Location</TableCell>
+                                    <TableCell>Stop Location</TableCell>
                                     <TableCell>Description</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {logs.length === 0 ? (
-                                    <TableRow><TableCell colSpan={7} align="center" sx={{ py: 5, color: 'text.secondary' }}>No time logs yet</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={9} align="center" sx={{ py: 5, color: 'text.secondary' }}>No time logs yet</TableCell></TableRow>
                                 ) : logs.map((log) => (
                                     <TableRow key={log.id} hover>
                                         <TableCell><Typography variant="body2" fontWeight={500}>{log.task?.title || '-'}</Typography></TableCell>
@@ -179,6 +300,8 @@ const TimeTrackingPage = () => {
                                             <Chip label={`${parseFloat(log.total_hours || 0).toFixed(2)}h`} color={log.end_time ? 'primary' : 'warning'} size="small" variant="outlined" />
                                         </TableCell>
                                         <TableCell><Chip label={log.is_manual ? 'Manual' : 'Timer'} size="small" /></TableCell>
+                                        <TableCell>{renderLocation(log.start_latitude, log.start_longitude, log.start_address)}</TableCell>
+                                        <TableCell>{renderLocation(log.stop_latitude, log.stop_longitude, log.stop_address)}</TableCell>
                                         <TableCell>{log.description || '-'}</TableCell>
                                     </TableRow>
                                 ))}

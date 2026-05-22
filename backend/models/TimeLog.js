@@ -10,6 +10,12 @@ const TimeLog = sequelize.define('TimeLog', {
     total_hours: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     description: { type: DataTypes.TEXT },
     is_manual: { type: DataTypes.BOOLEAN, defaultValue: false },
+    start_latitude: { type: DataTypes.DECIMAL(10, 8), allowNull: true },
+    start_longitude: { type: DataTypes.DECIMAL(11, 8), allowNull: true },
+    stop_latitude: { type: DataTypes.DECIMAL(10, 8), allowNull: true },
+    stop_longitude: { type: DataTypes.DECIMAL(11, 8), allowNull: true },
+    start_address: { type: DataTypes.STRING(500), allowNull: true },
+    stop_address: { type: DataTypes.STRING(500), allowNull: true },
 }, { tableName: 'time_logs' });
 
 module.exports = TimeLog;
