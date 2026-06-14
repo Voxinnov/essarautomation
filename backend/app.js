@@ -60,6 +60,8 @@ app.use('/api/statuses', require('./routes/statuses'));
 app.use('/api/bank-accounts', require('./routes/bankAccounts'));
 app.use('/api/proforma', require('./routes/proforma'));
 app.use('/api/company-profile', require('./routes/companyProfile'));
+app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Health check
 app.get('/api/health', (req, res) => {

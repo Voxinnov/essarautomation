@@ -7,6 +7,8 @@ export const authService = {
     updateProfile: (data) => api.put('/auth/profile', data),
     getUsers: () => api.get('/auth/users'),
     createUser: (data) => api.post('/auth/register', data), // Reuse register logic
+    updateUser: (id, data) => api.put(`/auth/users/${id}`, data),
+    deleteUser: (id) => api.delete(`/auth/users/${id}`),
 };
 
 export const roleService = {
@@ -132,4 +134,26 @@ export const companyProfileService = {
     update: (data) => api.put('/company-profile', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
+};
+
+export const attendanceService = {
+    checkIn: (data) => api.post('/attendance/check-in', data),
+    checkOut: (data) => api.post('/attendance/check-out', data),
+    getToday: () => api.get('/attendance/today'),
+    getMy: (params) => api.get('/attendance/my', { params }),
+    getAll: (params) => api.get('/attendance/all', { params }),
+    getSummary: (params) => api.get('/attendance/summary', { params }),
+    getLive: () => api.get('/attendance/live'),
+    getTravelReport: (params) => api.get('/attendance/travel-report', { params }),
+};
+
+export const notificationService = {
+    getAll: (params) => api.get('/notifications', { params }),
+    markRead: (id) => api.put(`/notifications/${id}/read`),
+    markAllRead: () => api.put('/notifications/read-all'),
+    getStreamUrl: () => {
+        const baseURL = api.defaults.baseURL || '';
+        const token = localStorage.getItem('token');
+        return `${baseURL}/notifications/stream?token=${token}`;
+    }
 };

@@ -113,4 +113,52 @@ const getUsers = async (req, res, next) => {
     }
 };
 
-module.exports = { register, login, getProfile, updateProfile, getUsers };
+// @desc    Delete user
+// @route   DELETE /api/auth/users/:id
+// @access  Private (Admin only)
+const deleteUser = async (req, res, next) => {
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Prevent admin from deleting themselves
+        if (user.id === req.user.id) {
+            return res.status(400).json({ success: false, message: 'You cannot delete yourself' });
+        }
+
+        await user.destroy();
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update user details by admin
+// @route   PUT /api/auth/users/:id
+// @access  Private (Admin only)
+const updateUser = async (req, res, next) => {
+    try {
+        const { name, email, password, phone, role, roleId, status } = req.body;
+        const user = await User.findByPk(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (phone !== undefined) user.phone = phone;
+        if (role) user.role = role;
+        if (roleId) user.roleId = roleId;
+        if (status) user.status = status;
+        if (password) user.password = password;
+
+        await user.save();
+        res.json({ success: true, data: user });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { register, login, getProfile, updateProfile, getUsers, deleteUser, updateUser };

@@ -122,6 +122,16 @@ exports.getPermissions = async (req, res) => {
                 ]
             },
             {
+                module: 'Attendance',
+                permissions: [
+                    { key: 'attendance_view', label: 'View Own Attendance' },
+                    { key: 'attendance_checkin', label: 'Check In / Check Out' },
+                    { key: 'attendance_view_all', label: 'View All Employees Attendance' },
+                    { key: 'attendance_manage', label: 'Manage & Edit Attendance Records' },
+                    { key: 'attendance_summary', label: 'View Monthly Summary Reports' }
+                ]
+            },
+            {
                 module: 'Billing',
                 permissions: [
                     { key: 'billing_view', label: 'View Billing' },
