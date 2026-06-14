@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const { Task, Client, Hospital, Doctor, User, Role } = require('../models');
+const { sendNotification } = require('../utils/notifications');
 
 // @desc    Get all tasks with filters and pagination
 // @route   GET /api/tasks
@@ -51,6 +52,18 @@ const getTasks = async (req, res, next) => {
 const createTask = async (req, res, next) => {
     try {
         const task = await Task.create({ ...req.body, created_by: req.user.id });
+        
+        // Notify assignee if assigned
+        if (task.assigned_to && task.assigned_to !== req.user.id) {
+            await sendNotification(
+                task.assigned_to,
+                'New Task Assigned',
+                `You have been assigned a new task: "${task.title}" by ${req.user.name}`,
+                'task_assigned',
+                { taskId: task.id }
+            );
+        }
+
         const taskWithDetails = await Task.findByPk(task.id, {
             include: [
                 { model: Client, as: 'client', attributes: ['id', 'patient_name'] },
@@ -98,7 +111,53 @@ const updateTask = async (req, res, next) => {
         let task = await Task.findByPk(req.params.id);
         if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
 
+        const oldAssignee = task.assigned_to;
+        const oldStatus = task.status;
+
         await task.update(req.body);
+
+        // Notify new assignee if changed
+        if (req.body.assigned_to && req.body.assigned_to !== oldAssignee) {
+            await sendNotification(
+                req.body.assigned_to,
+                'Task Assigned',
+                `You have been assigned the task: "${task.title}" by ${req.user.name}`,
+                'task_assigned',
+                { taskId: task.id }
+            );
+            
+            if (oldAssignee) {
+                await sendNotification(
+                    oldAssignee,
+                    'Task Unassigned',
+                    `You have been unassigned from the task: "${task.title}"`,
+                    'task_unassigned',
+                    { taskId: task.id }
+                );
+            }
+        } else if (req.body.status && req.body.status !== oldStatus) {
+            // Notify assignee if status changes
+            if (task.assigned_to && task.assigned_to !== req.user.id) {
+                await sendNotification(
+                    task.assigned_to,
+                    'Task Status Updated',
+                    `Task "${task.title}" status changed to "${req.body.status}" by ${req.user.name}`,
+                    'task_status_change',
+                    { taskId: task.id }
+                );
+            }
+            // Notify creator if status changes
+            if (task.created_by && task.created_by !== req.user.id) {
+                await sendNotification(
+                    task.created_by,
+                    'Task Status Updated',
+                    `Task "${task.title}" status changed to "${req.body.status}" by ${req.user.name}`,
+                    'task_status_change',
+                    { taskId: task.id }
+                );
+            }
+        }
+
         task = await Task.findByPk(req.params.id, {
             include: [
                 { model: Client, as: 'client', attributes: ['id', 'patient_name'] },

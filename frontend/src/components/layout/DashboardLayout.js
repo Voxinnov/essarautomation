@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Box, Drawer, AppBar, Toolbar, List, Typography, Divider,
     IconButton, ListItem, ListItemButton, ListItemIcon, ListItemText,
     Avatar, Menu, MenuItem, Chip, Tooltip, useTheme, useMediaQuery,
-    Collapse
+    Collapse, Badge, Button
 } from '@mui/material';
 import {
     Dashboard, Assignment, People, LocalHospital, MedicalServices,
     Update, AccessTime, Receipt, AttachMoney, Report, Settings,
     Menu as MenuIcon, Logout, AccountCircle, Notifications,
     ChevronLeft, Business, Inventory, SupervisorAccount, AdminPanelSettings,
-    ExpandLess, ExpandMore, ListAlt, AccountBalance, Description
+    ExpandLess, ExpandMore, ListAlt, AccountBalance, Description, Fingerprint
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
+import { notificationService } from '../../services';
 
 const DRAWER_WIDTH = 260;
 
@@ -25,6 +26,7 @@ const navItems = [
     { text: 'Doctors', icon: <MedicalServices />, path: '/doctors', permission: 'doctors_view' },
     { text: 'Work Updates', icon: <Update />, path: '/work-updates', permission: 'work_updates_view' },
     { text: 'Time Tracking', icon: <AccessTime />, path: '/time-tracking', permission: 'time_tracking_view' },
+    { text: 'Attendance', icon: <Fingerprint />, path: '/attendance', permission: 'attendance_view' },
     { text: 'Billing', icon: <Receipt />, path: '/billing', permission: 'billing_view' },
     { text: 'Proforma Invoices', icon: <Description />, path: '/proforma', permission: 'proforma_view' },
     { text: 'Expenses', icon: <AttachMoney />, path: '/expenses', permission: 'expenses_view' },
@@ -56,8 +58,99 @@ const DashboardLayout = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Notifications State
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
+
     const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
     const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+    const handleNotificationOpen = (e) => setNotificationAnchorEl(e.currentTarget);
+    const handleNotificationClose = () => setNotificationAnchorEl(null);
+
+    const fetchNotifications = useCallback(async () => {
+        if (!user) return;
+        try {
+            const res = await notificationService.getAll({ limit: 10 });
+            setNotifications(res.data.data);
+            setUnreadCount(res.data.unreadCount || 0);
+        } catch (err) {
+            console.error('Failed to fetch notifications', err);
+        }
+    }, [user]);
+
+    const handleMarkAllRead = async () => {
+        try {
+            await notificationService.markAllRead();
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            setUnreadCount(0);
+        } catch (err) {
+            console.error('Failed to mark all as read', err);
+        }
+    };
+
+    const handleNotificationClick = async (notification) => {
+        try {
+            if (!notification.read) {
+                await notificationService.markRead(notification.id);
+                setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+            handleNotificationClose();
+            
+            // Navigate if related to a task
+            if (notification.data && notification.data.taskId) {
+                navigate(`/tasks`);
+            }
+        } catch (err) {
+            console.error('Failed to read notification', err);
+        }
+    };
+
+    useEffect(() => {
+        if (!user) return;
+
+        fetchNotifications();
+
+        // Check and request native browser notification permissions
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            if (window.Notification.permission === 'default') {
+                window.Notification.requestPermission();
+            }
+        }
+
+        const streamUrl = notificationService.getStreamUrl();
+        const es = new EventSource(streamUrl);
+
+        es.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.connected) return;
+
+            setNotifications(prev => [data, ...prev].slice(0, 10));
+            setUnreadCount(prev => prev + 1);
+
+            // Browser desktop push alert
+            if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+                new window.Notification(data.title, {
+                    body: data.message,
+                });
+                
+                try {
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
+                    audio.volume = 0.5;
+                    audio.play();
+                } catch(e) {}
+            }
+        };
+
+        es.onerror = () => {
+            console.warn('SSE connection lost, reconnecting...');
+        };
+
+        return () => {
+            es.close();
+        };
+    }, [user, fetchNotifications]);
     const handleMenuClose = () => setAnchorEl(null);
     const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -235,10 +328,72 @@ const DashboardLayout = ({ children }) => {
                             {navItems.find(n => location.pathname.startsWith(n.path))?.text || 'Dashboard'}
                         </Typography>
                         <Tooltip title="Notifications">
-                            <IconButton sx={{ mr: 1 }}>
-                                <Notifications />
+                            <IconButton sx={{ mr: 1 }} onClick={handleNotificationOpen}>
+                                <Badge badgeContent={unreadCount} color="error">
+                                    <Notifications />
+                                </Badge>
                             </IconButton>
                         </Tooltip>
+                        
+                        {/* Notifications Dropdown Menu */}
+                        <Menu
+                            anchorEl={notificationAnchorEl}
+                            open={Boolean(notificationAnchorEl)}
+                            onClose={handleNotificationClose}
+                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                            PaperProps={{
+                                sx: { width: 320, maxHeight: 400, borderRadius: 2, mt: 1.5 }
+                            }}
+                        >
+                            <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Typography variant="subtitle2" fontWeight={700}>Notifications</Typography>
+                                {unreadCount > 0 && (
+                                    <Button size="small" variant="text" onClick={handleMarkAllRead} sx={{ fontSize: '0.75rem', py: 0 }}>
+                                        Mark all read
+                                    </Button>
+                                )}
+                            </Box>
+                            <Divider />
+                            {notifications.length === 0 ? (
+                                <Box sx={{ p: 3, textAlign: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">No notifications yet</Typography>
+                                </Box>
+                            ) : (
+                                notifications.map((n) => (
+                                    <MenuItem
+                                        key={n.id}
+                                        onClick={() => handleNotificationClick(n)}
+                                        sx={{
+                                            whiteSpace: 'normal',
+                                            bgcolor: n.read ? 'transparent' : 'action.hover',
+                                            borderBottom: '1px solid rgba(0,0,0,0.04)',
+                                            py: 1,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'flex-start',
+                                            gap: 0.3,
+                                            '&:hover': { bgcolor: 'action.selected' }
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                            <Typography variant="subtitle2" fontWeight={n.read ? 600 : 800} fontSize="0.8rem" color="text.primary">
+                                                {n.title}
+                                            </Typography>
+                                            {!n.read && (
+                                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />
+                                            )}
+                                        </Box>
+                                        <Typography variant="body2" fontSize="0.75rem" color="text.secondary" sx={{ wordBreak: 'break-word', width: '100%' }}>
+                                            {n.message}
+                                        </Typography>
+                                        <Typography variant="caption" fontSize="0.65rem" color="text.secondary" sx={{ mt: 0.5 }}>
+                                            {new Date(n.created_at || n.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                        </Typography>
+                                    </MenuItem>
+                                ))
+                            )}
+                        </Menu>
                         <Tooltip title="Profile">
                             <IconButton onClick={handleMenuOpen}>
                                 <Avatar sx={{ width: 32, height: 32, bgcolor: '#8a0303', fontSize: 14 }}>

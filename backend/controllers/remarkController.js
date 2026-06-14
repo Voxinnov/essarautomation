@@ -1,4 +1,5 @@
 const { Remark, Task, User } = require('../models');
+const { sendNotification } = require('../utils/notifications');
 
 const getRemarks = async (req, res, next) => {
     try {
@@ -15,6 +16,32 @@ const getRemarks = async (req, res, next) => {
 const createRemark = async (req, res, next) => {
     try {
         const remark = await Remark.create({ ...req.body, user_id: req.user.id });
+
+        // Retrieve task details to notify assigned users
+        const task = await Task.findByPk(remark.task_id);
+        if (task) {
+            // Notify assignee if not the remark creator
+            if (task.assigned_to && task.assigned_to !== req.user.id) {
+                await sendNotification(
+                    task.assigned_to,
+                    'New Remark on Task',
+                    `${req.user.name} added a remark to task: "${task.title}"`,
+                    'new_remark',
+                    { taskId: task.id }
+                );
+            }
+            // Notify creator if not the remark creator and not the assignee
+            if (task.created_by && task.created_by !== req.user.id && task.created_by !== task.assigned_to) {
+                await sendNotification(
+                    task.created_by,
+                    'New Remark on Task',
+                    `${req.user.name} added a remark to task: "${task.title}"`,
+                    'new_remark',
+                    { taskId: task.id }
+                );
+            }
+        }
+
         const remarkWithUser = await Remark.findByPk(remark.id, {
             include: [{ model: User, as: 'user', attributes: ['id', 'name', 'role'] }],
         });

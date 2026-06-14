@@ -26,6 +26,7 @@ import UsersPage from './pages/admin/UsersPage';
 import RolesPage from './pages/admin/RolesPage';
 import StatusManagementPage from './pages/settings/StatusManagementPage';
 import BankAccountsPage from './pages/settings/BankAccountsPage';
+import AttendancePage from './pages/attendance/AttendancePage';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -81,6 +82,7 @@ function App() {
             <Route path="/settings/bank-accounts" element={<PrivateRoute><PermissionRoute adminOnly><BankAccountsPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/users" element={<PrivateRoute><PermissionRoute permissionKey="users_manage"><UsersPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/role-management" element={<PrivateRoute><PermissionRoute permissionKey="roles_manage"><RolesPage /></PermissionRoute></PrivateRoute>} />
+            <Route path="/attendance" element={<PrivateRoute><PermissionRoute permissionKey="attendance_view"><AttendancePage /></PermissionRoute></PrivateRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

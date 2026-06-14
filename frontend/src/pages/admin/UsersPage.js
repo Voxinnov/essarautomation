@@ -16,7 +16,7 @@ const UsersPage = () => {
     const [editMode, setEditMode] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '', phone: '', role: 'staff', roleId: ''
+        name: '', email: '', password: '', phone: '', role: 'staff', roleId: '', status: 'active'
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -51,11 +51,12 @@ const UsersPage = () => {
                 password: '', // Don't show password
                 phone: user.phone || '',
                 role: user.role,
-                roleId: user.roleId || ''
+                roleId: user.roleId || '',
+                status: user.status || 'active'
             });
         } else {
             setEditMode(false);
-            setFormData({ name: '', email: '', password: '', phone: '', role: 'staff', roleId: '' });
+            setFormData({ name: '', email: '', password: '', phone: '', role: 'staff', roleId: '', status: 'active' });
         }
         setOpen(true);
     };
@@ -63,10 +64,11 @@ const UsersPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
         try {
             if (editMode) {
-                // Update logic if needed, or just focus on Create as requested
-                // authService.updateUser(currentUser.id, formData);
+                await authService.updateUser(currentUser.id, formData);
+                setSuccess('User updated successfully');
             } else {
                 await authService.createUser(formData);
                 setSuccess('User created successfully');
@@ -75,6 +77,20 @@ const UsersPage = () => {
             setOpen(false);
         } catch (err) {
             setError(err.response?.data?.message || 'Action failed');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            setError('');
+            setSuccess('');
+            try {
+                await authService.deleteUser(id);
+                setSuccess('User deleted successfully');
+                fetchData();
+            } catch (err) {
+                setError(err.response?.data?.message || 'Failed to delete user');
+            }
         }
     };
 
@@ -129,7 +145,7 @@ const UsersPage = () => {
                                 </TableCell>
                                 <TableCell align="right">
                                     <IconButton size="small" onClick={() => handleOpen(user)}><Edit fontSize="small" /></IconButton>
-                                    <IconButton size="small" color="error"><Delete fontSize="small" /></IconButton>
+                                    <IconButton size="small" color="error" onClick={() => handleDelete(user.id)}><Delete fontSize="small" /></IconButton>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -172,6 +188,21 @@ const UsersPage = () => {
                                 ))}
                             </TextField>
                         </Grid>
+                        {editMode && (
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    label="Status"
+                                    value={formData.status || 'active'}
+                                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                                    required
+                                >
+                                    <MenuItem value="active">Active</MenuItem>
+                                    <MenuItem value="inactive">Inactive</MenuItem>
+                                </TextField>
+                            </Grid>
+                        )}
                     </Grid>
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>

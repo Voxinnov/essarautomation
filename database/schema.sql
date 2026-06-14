@@ -154,3 +154,25 @@ CREATE TABLE IF NOT EXISTS remarks (
   FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- Attendance table
+CREATE TABLE IF NOT EXISTS attendance (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  date DATE NOT NULL,
+  check_in_time DATETIME,
+  check_out_time DATETIME,
+  total_hours DECIMAL(10,2) DEFAULT 0,
+  status ENUM('present','late','half_day','absent') DEFAULT 'absent',
+  check_in_latitude DECIMAL(10,8) NULL,
+  check_in_longitude DECIMAL(11,8) NULL,
+  check_in_address VARCHAR(500) NULL,
+  check_out_latitude DECIMAL(10,8) NULL,
+  check_out_longitude DECIMAL(11,8) NULL,
+  check_out_address VARCHAR(500) NULL,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_date (user_id, date)
+);

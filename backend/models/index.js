@@ -20,6 +20,8 @@ const TaskProduct = require('./TaskProduct');
 const ProformaInvoice = require('./ProformaInvoice');
 const ProformaInvoiceItem = require('./ProformaInvoiceItem');
 const CompanyProfile = require('./CompanyProfile');
+const Attendance = require('./Attendance');
+const Notification = require('./Notification');
 
 
 // Hospital - Doctor
@@ -38,10 +40,10 @@ Task.belongsTo(Hospital, { foreignKey: 'hospital_id', as: 'hospital' });
 Doctor.hasMany(Task, { foreignKey: 'doctor_id', as: 'tasks' });
 Task.belongsTo(Doctor, { foreignKey: 'doctor_id', as: 'doctor' });
 
-User.hasMany(Task, { foreignKey: 'assigned_to', as: 'assigned_tasks' });
+User.hasMany(Task, { foreignKey: 'assigned_to', as: 'assigned_tasks', onDelete: 'SET NULL' });
 Task.belongsTo(User, { foreignKey: 'assigned_to', as: 'assignee' });
 
-User.hasMany(Task, { foreignKey: 'created_by', as: 'created_tasks' });
+User.hasMany(Task, { foreignKey: 'created_by', as: 'created_tasks', onDelete: 'SET NULL' });
 Task.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 // WorkUpdate associations
@@ -54,13 +56,13 @@ TaskProduct.belongsTo(Task, { foreignKey: 'task_id', as: 'task' });
 
 Product.hasMany(TaskProduct, { foreignKey: 'product_id', as: 'task_products' });
 TaskProduct.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
-User.hasMany(WorkUpdate, { foreignKey: 'updated_by', as: 'work_updates' });
+User.hasMany(WorkUpdate, { foreignKey: 'updated_by', as: 'work_updates', onDelete: 'SET NULL' });
 WorkUpdate.belongsTo(User, { foreignKey: 'updated_by', as: 'updater' });
 
 // TimeLog associations
 Task.hasMany(TimeLog, { foreignKey: 'task_id', as: 'time_logs' });
 TimeLog.belongsTo(Task, { foreignKey: 'task_id', as: 'task' });
-User.hasMany(TimeLog, { foreignKey: 'user_id', as: 'time_logs' });
+User.hasMany(TimeLog, { foreignKey: 'user_id', as: 'time_logs', onDelete: 'SET NULL' });
 TimeLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // Billing associations
@@ -73,13 +75,13 @@ BankAccount.hasMany(Billing, { foreignKey: 'bank_account_id', as: 'billings' });
 Billing.belongsTo(BankAccount, { foreignKey: 'bank_account_id', as: 'bank_account' });
 
 // Expense associations
-User.hasMany(Expense, { foreignKey: 'created_by', as: 'expenses' });
+User.hasMany(Expense, { foreignKey: 'created_by', as: 'expenses', onDelete: 'SET NULL' });
 Expense.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 // Remark associations
 Task.hasMany(Remark, { foreignKey: 'task_id', as: 'remarks' });
 Remark.belongsTo(Task, { foreignKey: 'task_id', as: 'task' });
-User.hasMany(Remark, { foreignKey: 'user_id', as: 'remarks' });
+User.hasMany(Remark, { foreignKey: 'user_id', as: 'remarks', onDelete: 'SET NULL' });
 Remark.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // Stock Management associations
@@ -92,7 +94,7 @@ Product.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
 Product.hasMany(StockTransaction, { foreignKey: 'product_id', as: 'transactions' });
 StockTransaction.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 
-User.hasMany(StockTransaction, { foreignKey: 'user_id', as: 'stock_transactions' });
+User.hasMany(StockTransaction, { foreignKey: 'user_id', as: 'stock_transactions', onDelete: 'SET NULL' });
 StockTransaction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 // Role associations
@@ -106,7 +108,7 @@ ProformaInvoice.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
 BankAccount.hasMany(ProformaInvoice, { foreignKey: 'bank_account_id', as: 'proforma_invoices' });
 ProformaInvoice.belongsTo(BankAccount, { foreignKey: 'bank_account_id', as: 'bank_account' });
 
-User.hasMany(ProformaInvoice, { foreignKey: 'created_by', as: 'proforma_invoices' });
+User.hasMany(ProformaInvoice, { foreignKey: 'created_by', as: 'proforma_invoices', onDelete: 'SET NULL' });
 ProformaInvoice.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 ProformaInvoice.hasMany(ProformaInvoiceItem, { foreignKey: 'proforma_invoice_id', as: 'items', onDelete: 'CASCADE' });
@@ -114,6 +116,14 @@ ProformaInvoiceItem.belongsTo(ProformaInvoice, { foreignKey: 'proforma_invoice_i
 
 Product.hasMany(ProformaInvoiceItem, { foreignKey: 'product_id', as: 'proforma_items' });
 ProformaInvoiceItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+
+// Attendance associations
+User.hasMany(Attendance, { foreignKey: 'user_id', as: 'attendance_records', onDelete: 'CASCADE' });
+Attendance.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// Notification associations
+User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications', onDelete: 'CASCADE' });
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 
 module.exports = {
@@ -139,4 +149,6 @@ module.exports = {
     ProformaInvoice,
     ProformaInvoiceItem,
     CompanyProfile,
+    Attendance,
+    Notification,
 };
