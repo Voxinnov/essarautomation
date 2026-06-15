@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TouchableOpacity, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
 
 // Screens
@@ -9,6 +10,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import TasksScreen from '../screens/TasksScreen';
 import TaskDetailsScreen from '../screens/TaskDetailsScreen';
 import TimeTrackingScreen from '../screens/TimeTrackingScreen';
+import AttendanceScreen from '../screens/AttendanceScreen';
 
 import { COLORS } from '../utils/theme';
 
@@ -41,11 +43,17 @@ const TasksNavigator = () => {
 
 const MainTabNavigator = () => {
   const { logout } = React.useContext(AuthContext);
+  const navigation = useNavigation();
 
-  const LogoutButton = () => (
-    <TouchableOpacity onPress={logout} style={{ marginRight: 15 }}>
-      <Text style={{ color: COLORS.textWhite, fontWeight: 'bold' }}>Logout</Text>
-    </TouchableOpacity>
+  const HeaderRight = () => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
+      <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={{ marginRight: 15 }}>
+        <Text style={{ fontSize: 18 }}>🔔</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={logout}>
+        <Text style={{ color: COLORS.textWhite, fontWeight: 'bold' }}>Logout</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -56,7 +64,7 @@ const MainTabNavigator = () => {
         headerStyle: { backgroundColor: COLORS.primary },
         headerTintColor: COLORS.textWhite,
         headerTitleStyle: { fontWeight: 'bold' },
-        headerRight: () => <LogoutButton />,
+        headerRight: () => <HeaderRight />,
       }}
     >
       <Tab.Screen 
@@ -87,6 +95,16 @@ const MainTabNavigator = () => {
           title: 'Time Logs',
           tabBarIcon: ({ color }) => (
             <View style={{ width: 24, height: 24, backgroundColor: color, borderRadius: 12, borderWidth: 2, borderColor: 'white' }} />
+          )
+        }} 
+      />
+      <Tab.Screen 
+        name="Attendance" 
+        component={AttendanceScreen} 
+        options={{ 
+          title: 'Attendance',
+          tabBarIcon: ({ color }) => (
+            <View style={{ width: 24, height: 24, backgroundColor: color, borderRadius: 4 }} />
           )
         }} 
       />

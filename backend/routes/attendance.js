@@ -9,12 +9,14 @@ const {
     getSummary,
     getLiveLocations,
     getTravelReport,
+    updateLocation,
 } = require('../controllers/attendanceController');
 const { protect, authorize } = require('../middleware/auth');
 
 // User routes
 router.post('/check-in', protect, checkIn);
 router.post('/check-out', protect, checkOut);
+router.post('/update-location', protect, updateLocation);
 router.get('/today', protect, getToday);
 router.get('/my', protect, getMyAttendance);
 

@@ -15,6 +15,9 @@ const Attendance = sequelize.define('Attendance', {
     check_out_latitude: { type: DataTypes.DECIMAL(10, 8), allowNull: true },
     check_out_longitude: { type: DataTypes.DECIMAL(11, 8), allowNull: true },
     check_out_address: { type: DataTypes.STRING(500), allowNull: true },
+    current_latitude: { type: DataTypes.DECIMAL(10, 8), allowNull: true },
+    current_longitude: { type: DataTypes.DECIMAL(11, 8), allowNull: true },
+    current_address: { type: DataTypes.STRING(500), allowNull: true },
     notes: { type: DataTypes.TEXT, allowNull: true },
 }, { tableName: 'attendance' });
 

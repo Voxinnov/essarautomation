@@ -446,5 +446,36 @@ const getTravelReport = async (req, res, next) => {
     }
 };
 
-module.exports = { checkIn, checkOut, getToday, getMyAttendance, getAllAttendance, getSummary, getLiveLocations, getTravelReport };
+// @desc    Update live location
+// @route   POST /api/attendance/update-location
+// @access  Private
+const updateLocation = async (req, res, next) => {
+    try {
+        const { latitude, longitude, address } = req.body;
+        const todayStr = getTodayIST();
+
+        const attendance = await Attendance.findOne({
+            where: { user_id: req.user.id, date: todayStr },
+        });
+
+        if (!attendance || !attendance.check_in_time || attendance.check_out_time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Not currently checked in.',
+            });
+        }
+
+        await attendance.update({
+            current_latitude: latitude,
+            current_longitude: longitude,
+            current_address: address || attendance.current_address,
+        });
+
+        res.json({ success: true, data: attendance });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { checkIn, checkOut, getToday, getMyAttendance, getAllAttendance, getSummary, getLiveLocations, getTravelReport, updateLocation };
 

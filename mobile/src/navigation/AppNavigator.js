@@ -7,6 +7,7 @@ import { AuthContext } from '../context/AuthContext';
 // Screens
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,7 +27,10 @@ const AppNavigator = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           // Main App Stack
-          <Stack.Screen name="Main" component={MainTabNavigator} />
+          <Stack.Group>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'modal' }} />
+          </Stack.Group>
         ) : (
           // Auth Stack
           <Stack.Screen name="Login" component={LoginScreen} />
