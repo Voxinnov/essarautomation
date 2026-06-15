@@ -192,9 +192,9 @@ const AttendancePage = () => {
 
     useEffect(() => {
         if (liveLogs.length > 0 && !selectedCoords) {
-            const firstWithCoords = liveLogs.find(l => l.check_in_latitude && l.check_in_longitude);
+            const firstWithCoords = liveLogs.find(l => (l.current_latitude || l.check_in_latitude) && (l.current_longitude || l.check_in_longitude));
             if (firstWithCoords) {
-                setSelectedCoords([parseFloat(firstWithCoords.check_in_latitude), parseFloat(firstWithCoords.check_in_longitude)]);
+                setSelectedCoords([parseFloat(firstWithCoords.current_latitude || firstWithCoords.check_in_latitude), parseFloat(firstWithCoords.current_longitude || firstWithCoords.check_in_longitude)]);
                 setZoomLevel(12);
             }
         }
@@ -767,14 +767,16 @@ const AttendancePage = () => {
                                             const name = log.user?.name || 'Unknown';
                                             const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                                             const isActive = !log.check_out_time;
-                                            const hasCoords = log.check_in_latitude && log.check_in_longitude;
+                                            const latStr = log.current_latitude || log.check_in_latitude;
+                                            const lngStr = log.current_longitude || log.check_in_longitude;
+                                            const hasCoords = latStr && lngStr;
 
                                             return (
                                                 <Box
                                                     key={log.id}
                                                     onClick={() => {
                                                         if (hasCoords) {
-                                                            setSelectedCoords([parseFloat(log.check_in_latitude), parseFloat(log.check_in_longitude)]);
+                                                            setSelectedCoords([parseFloat(latStr), parseFloat(lngStr)]);
                                                             setZoomLevel(15);
                                                         }
                                                     }}
@@ -849,7 +851,7 @@ const AttendancePage = () => {
                                         border: none;
                                     }
                                 `}</style>
-                                {liveLogs.filter(l => l.check_in_latitude && l.check_in_longitude).length === 0 ? (
+                                {liveLogs.filter(l => (l.current_latitude || l.check_in_latitude) && (l.current_longitude || l.check_in_longitude)).length === 0 ? (
                                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', bgcolor: 'action.hover', borderRadius: 2 }}>
                                         <LocationOn sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
                                         <Typography variant="h6" color="text.secondary">No Map Coordinates Available</Typography>
@@ -868,9 +870,11 @@ const AttendancePage = () => {
                                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                         />
                                         {liveLogs.map((log) => {
-                                            if (!log.check_in_latitude || !log.check_in_longitude) return null;
-                                            const lat = parseFloat(log.check_in_latitude);
-                                            const lng = parseFloat(log.check_in_longitude);
+                                            const latStr = log.current_latitude || log.check_in_latitude;
+                                            const lngStr = log.current_longitude || log.check_in_longitude;
+                                            if (!latStr || !lngStr) return null;
+                                            const lat = parseFloat(latStr);
+                                            const lng = parseFloat(lngStr);
                                             const name = log.user?.name || 'Unknown';
                                             const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                                             const isActive = !log.check_out_time;
