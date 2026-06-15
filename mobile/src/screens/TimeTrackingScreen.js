@@ -12,9 +12,11 @@ import {
   Modal,
   Platform,
   ScrollView,
+  Linking,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../services/api';
+import { locationService } from '../services/locationService';
 import CustomPicker from '../components/CustomPicker';
 import { COLORS, BORDER_RADIUS, SPACING, SHADOWS } from '../utils/theme';
 
@@ -35,6 +37,7 @@ const TimeTrackingScreen = () => {
   const [description, setDescription] = useState('');
   const [submittingStart, setSubmittingStart] = useState(false);
   const [submittingStop, setSubmittingStop] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Manual Entry Modal State
   const [manualModalVisible, setManualModalVisible] = useState(false);
@@ -135,10 +138,17 @@ const TimeTrackingScreen = () => {
       return;
     }
     setSubmittingStart(true);
+    setLocationLoading(true);
     try {
+      // Capture location before starting
+      const loc = await locationService.getCurrentLocation();
+
       const response = await api.post('/time/start', {
         task_id: selectedTaskId,
         description: description.trim(),
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        address: loc.location_address,
       });
       
       const active = response.data.data;
@@ -155,14 +165,23 @@ const TimeTrackingScreen = () => {
       Alert.alert('Error', e.response?.data?.message || 'Failed to start timer');
     } finally {
       setSubmittingStart(false);
+      setLocationLoading(false);
     }
   };
 
   const handleStopTimer = async () => {
     if (!activeLog) return;
     setSubmittingStop(true);
+    setLocationLoading(true);
     try {
-      await api.post(`/time/stop/${activeLog.id}`);
+      // Capture location before stopping
+      const loc = await locationService.getCurrentLocation();
+
+      await api.post(`/time/stop/${activeLog.id}`, {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        address: loc.location_address,
+      });
       setActiveLog(null);
       stopLocalTimer();
       
@@ -174,6 +193,7 @@ const TimeTrackingScreen = () => {
       Alert.alert('Error', 'Failed to stop timer');
     } finally {
       setSubmittingStop(false);
+      setLocationLoading(false);
     }
   };
 
@@ -252,6 +272,27 @@ const TimeTrackingScreen = () => {
     setRefreshing(false);
   };
 
+  const openInMaps = (lat, lng) => {
+    const url = `https://www.google.com/maps?q=${lat},${lng}`;
+    Linking.openURL(url).catch(() => {});
+  };
+
+  const renderLocationChip = (lat, lng, address, label) => {
+    if (!lat && !lng) return null;
+    const displayText = address || `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+    const truncated = displayText.length > 35 ? displayText.substring(0, 35) + '…' : displayText;
+    return (
+      <TouchableOpacity
+        style={styles.locationChip}
+        onPress={() => openInMaps(lat, lng)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.locationChipLabel}>{label}</Text>
+        <Text style={styles.locationChipText}>📍 {truncated}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const renderLog = ({ item }) => {
     let durationStr = 'Active';
     if (item.end_time) {
@@ -282,6 +323,14 @@ const TimeTrackingScreen = () => {
         {item.description ? (
           <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
         ) : null}
+
+        {/* Location Info */}
+        {(item.start_latitude || item.stop_latitude) && (
+          <View style={styles.locationRow}>
+            {renderLocationChip(item.start_latitude, item.start_longitude, item.start_address, 'Start')}
+            {renderLocationChip(item.stop_latitude, item.stop_longitude, item.stop_address, 'Stop')}
+          </View>
+        )}
 
         <View style={styles.cardFooter}>
           <Text style={styles.durationText}>Total: {durationStr}</Text>
@@ -330,15 +379,28 @@ const TimeTrackingScreen = () => {
                 ) : null}
                 
                 <Text style={styles.timerCounter}>{elapsedText}</Text>
+
+                {activeLog.start_address ? (
+                  <View style={styles.timerLocationChip}>
+                    <Text style={styles.timerLocationText} numberOfLines={1}>
+                      📍 Started at: {activeLog.start_address}
+                    </Text>
+                  </View>
+                ) : null}
                 
                 <TouchableOpacity
-                  style={styles.stopButton}
+                  style={[styles.stopButton, locationLoading && styles.buttonDisabled]}
                   onPress={handleStopTimer}
-                  disabled={submittingStop}
+                  disabled={submittingStop || locationLoading}
                   activeOpacity={0.8}
                 >
-                  {submittingStop ? (
-                    <ActivityIndicator color={COLORS.textWhite} />
+                  {(submittingStop || locationLoading) ? (
+                    <View style={styles.buttonLoadingRow}>
+                      <ActivityIndicator color={COLORS.textWhite} size="small" />
+                      <Text style={styles.stopButtonText}>
+                        {locationLoading ? ' Getting Location…' : ' Stopping…'}
+                      </Text>
+                    </View>
                   ) : (
                     <Text style={styles.stopButtonText}>🔴 Check Out</Text>
                   )}
@@ -368,17 +430,26 @@ const TimeTrackingScreen = () => {
                 />
 
                 <TouchableOpacity
-                  style={styles.startButton}
+                  style={[styles.startButton, locationLoading && styles.buttonDisabled]}
                   onPress={handleStartTimer}
-                  disabled={submittingStart}
+                  disabled={submittingStart || locationLoading}
                   activeOpacity={0.8}
                 >
-                  {submittingStart ? (
-                    <ActivityIndicator color={COLORS.textWhite} />
+                  {(submittingStart || locationLoading) ? (
+                    <View style={styles.buttonLoadingRow}>
+                      <ActivityIndicator color={COLORS.textWhite} size="small" />
+                      <Text style={styles.startButtonText}>
+                        {locationLoading ? ' Locating…' : ' Starting…'}
+                      </Text>
+                    </View>
                   ) : (
                     <Text style={styles.startButtonText}>🟢 Check In</Text>
                   )}
                 </TouchableOpacity>
+
+                <Text style={styles.locationHint}>
+                  📍 Location auto-saved on check-in & check-out
+                </Text>
               </View>
             )}
 
@@ -826,6 +897,64 @@ const styles = StyleSheet.create({
   modalSaveBtnText: {
     color: COLORS.textWhite,
     fontWeight: '700',
+  },
+  // Location styles
+  locationHint: {
+    fontSize: 11,
+    color: COLORS.textLight,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+  },
+  timerLocationChip: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: BORDER_RADIUS.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    alignSelf: 'center',
+    marginBottom: SPACING.sm,
+    maxWidth: '90%',
+  },
+  timerLocationText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  buttonLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  locationChip: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    flex: 1,
+    minWidth: 120,
+  },
+  locationChipLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: COLORS.textLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 1,
+  },
+  locationChipText: {
+    fontSize: 11,
+    color: COLORS.primary,
+    fontWeight: '500',
   },
 });
 
