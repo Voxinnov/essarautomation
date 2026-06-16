@@ -105,8 +105,8 @@ const AttendanceScreen = () => {
     );
   }
 
-  const isCheckedIn = todayAttendance && !todayAttendance.end_time;
-  const isCheckedOut = todayAttendance && todayAttendance.end_time;
+  const isCheckedIn = todayAttendance && !todayAttendance.check_out_time;
+  const isCheckedOut = todayAttendance && todayAttendance.check_out_time;
 
   useEffect(() => {
     let interval;
@@ -144,17 +144,17 @@ const AttendanceScreen = () => {
         <View style={styles.statusRow}>
           <View style={styles.timeBlock}>
             <Text style={styles.timeLabel}>Check In</Text>
-            <Text style={styles.timeValue}>{todayAttendance ? formatTime(todayAttendance.start_time) : '--:--'}</Text>
-            {todayAttendance?.start_address && (
-              <Text style={styles.addressText} numberOfLines={2}>📍 {todayAttendance.start_address}</Text>
+            <Text style={styles.timeValue}>{todayAttendance ? formatTime(todayAttendance.check_in_time) : '--:--'}</Text>
+            {todayAttendance?.check_in_address && (
+              <Text style={styles.addressText} numberOfLines={2}>📍 {todayAttendance.check_in_address}</Text>
             )}
           </View>
 
           <View style={styles.timeBlock}>
             <Text style={styles.timeLabel}>Check Out</Text>
-            <Text style={styles.timeValue}>{todayAttendance?.end_time ? formatTime(todayAttendance.end_time) : '--:--'}</Text>
-            {todayAttendance?.end_address && (
-              <Text style={styles.addressText} numberOfLines={2}>📍 {todayAttendance.end_address}</Text>
+            <Text style={styles.timeValue}>{todayAttendance?.check_out_time ? formatTime(todayAttendance.check_out_time) : '--:--'}</Text>
+            {todayAttendance?.check_out_address && (
+              <Text style={styles.addressText} numberOfLines={2}>📍 {todayAttendance.check_out_address}</Text>
             )}
           </View>
         </View>

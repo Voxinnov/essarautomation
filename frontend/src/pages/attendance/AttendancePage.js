@@ -786,8 +786,8 @@ const AttendancePage = () => {
                                                         borderRadius: 2,
                                                         cursor: hasCoords ? 'pointer' : 'default',
                                                         border: '1px solid',
-                                                        borderColor: selectedCoords && selectedCoords[0] === parseFloat(log.check_in_latitude) && selectedCoords[1] === parseFloat(log.check_in_longitude) ? 'primary.main' : 'divider',
-                                                        bgcolor: selectedCoords && selectedCoords[0] === parseFloat(log.check_in_latitude) && selectedCoords[1] === parseFloat(log.check_in_longitude) ? 'rgba(138, 3, 3, 0.04)' : 'transparent',
+                                                        borderColor: selectedCoords && selectedCoords[0] === parseFloat(latStr) && selectedCoords[1] === parseFloat(lngStr) ? 'primary.main' : 'divider',
+                                                        bgcolor: selectedCoords && selectedCoords[0] === parseFloat(latStr) && selectedCoords[1] === parseFloat(lngStr) ? 'rgba(138, 3, 3, 0.04)' : 'transparent',
                                                         '&:hover': {
                                                             bgcolor: hasCoords ? 'rgba(0,0,0,0.02)' : 'transparent'
                                                         }
