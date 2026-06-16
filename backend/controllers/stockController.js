@@ -81,7 +81,7 @@ exports.createTransaction = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
     try {
-        const { name, product_code, hsn_code, brand_name, category_name, units_per_box, mrp, ptr, tax_rate, reorder_level } = req.body;
+        const { name, product_code, hsn_code, brand_name, category_name, units_per_box, mrp, ptr, tax_rate, reorder_level, batch_number, expiry_date } = req.body;
 
         // Find or create Brand
         const [brand] = await Brand.findOrCreate({
@@ -107,7 +107,9 @@ exports.createProduct = async (req, res) => {
             tax_rate: tax_rate || 5,
             reorder_level: reorder_level || 10,
             current_stock: 0,
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            batch_number: batch_number || null,
+            expiry_date: expiry_date || null
         });
 
         res.status(201).json({ success: true, data: product });

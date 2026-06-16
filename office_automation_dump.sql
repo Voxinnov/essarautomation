@@ -445,6 +445,8 @@ CREATE TABLE `products` (
   `current_stock` int DEFAULT '0',
   `reorder_level` int DEFAULT '10',
   `status` enum('ACTIVE','INACTIVE') DEFAULT 'ACTIVE',
+  `batch_number` varchar(255) DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   `brand_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,

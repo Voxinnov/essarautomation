@@ -52,6 +52,14 @@ const Product = sequelize.define('Product', {
         type: DataTypes.ENUM('ACTIVE', 'INACTIVE'),
         defaultValue: 'ACTIVE',
     },
+    batch_number: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    expiry_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
 }, {
     timestamps: true,
     underscored: true,

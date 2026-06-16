@@ -23,7 +23,8 @@ const ProductList = () => {
     const [openAddProduct, setOpenAddProduct] = useState(false);
     const [addProductForm, setAddProductForm] = useState({
         name: '', brand_name: '', category_name: '', product_code: '', 
-        hsn_code: '', units_per_box: '', mrp: '', ptr: '', tax_rate: '5', reorder_level: '10'
+        hsn_code: '', units_per_box: '', mrp: '', ptr: '', tax_rate: '5', reorder_level: '10',
+        batch_number: '', expiry_date: ''
     });
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -62,7 +63,8 @@ const ProductList = () => {
     const handleOpenAddProduct = () => {
         setAddProductForm({
             name: '', brand_name: '', category_name: '', product_code: '', 
-            hsn_code: '', units_per_box: '', mrp: '', ptr: '', tax_rate: '5', reorder_level: '10'
+            hsn_code: '', units_per_box: '', mrp: '', ptr: '', tax_rate: '5', reorder_level: '10',
+            batch_number: '', expiry_date: ''
         });
         setError('');
         setOpenAddProduct(true);
@@ -188,6 +190,7 @@ const ProductList = () => {
                                 <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800, py: 3 }}>PRODUCT INFORMATION</TableCell>
                                 <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800 }}>BRAND / CATEGORY</TableCell>
                                 <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800 }}>SPECS</TableCell>
+                                <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800 }}>BATCH / EXPIRY</TableCell>
                                 <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800 }}>UNIT PRICE</TableCell>
                                 <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800 }} align="center">AVAILABILITY</TableCell>
                                 <TableCell sx={{ bgcolor: '#f8fafc', fontWeight: 800 }} align="center">STOCK ACTIONS</TableCell>
@@ -218,6 +221,12 @@ const ProductList = () => {
                                     <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>{prod.size || '-'}</Typography>
                                         <Typography variant="caption" color="text.secondary">{prod.units_per_box ? `${prod.units_per_box} units/box` : ''}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>{prod.batch_number || '-'}</Typography>
+                                        <Typography variant="caption" color={prod.expiry_date ? 'error.main' : 'text.secondary'} sx={{ fontWeight: prod.expiry_date ? 600 : 500 }}>
+                                            {prod.expiry_date || 'No Expiry'}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body1" sx={{ fontWeight: 800, color: '#1e293b' }}>₹{prod.ptr || prod.mrp}</Typography>
@@ -448,6 +457,12 @@ const ProductList = () => {
                         </Grid>
                         <Grid item xs={6} md={6}>
                             <TextField fullWidth label="Reorder Level" type="number" variant="outlined" value={addProductForm.reorder_level} onChange={(e) => setAddProductForm({ ...addProductForm, reorder_level: e.target.value })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }} />
+                        </Grid>
+                        <Grid item xs={6} md={6}>
+                            <TextField fullWidth label="Batch Number" variant="outlined" value={addProductForm.batch_number} onChange={(e) => setAddProductForm({ ...addProductForm, batch_number: e.target.value })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }} />
+                        </Grid>
+                        <Grid item xs={6} md={6}>
+                            <TextField fullWidth label="Expiry Date" type="date" InputLabelProps={{ shrink: true }} variant="outlined" value={addProductForm.expiry_date} onChange={(e) => setAddProductForm({ ...addProductForm, expiry_date: e.target.value })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }} />
                         </Grid>
                     </Grid>
                 </DialogContent>
