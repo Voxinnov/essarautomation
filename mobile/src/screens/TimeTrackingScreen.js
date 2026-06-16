@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -53,10 +54,12 @@ const TimeTrackingScreen = () => {
   // DateTimePicker display controls
   const [showDatePicker, setShowDatePicker] = useState(null); // 'start_date', 'start_time', 'end_date', 'end_time'
 
-  useEffect(() => {
-    fetchInitialData();
-    return () => stopLocalTimer();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchInitialData();
+      return () => stopLocalTimer();
+    }, [])
+  );
 
   const fetchInitialData = async () => {
     try {

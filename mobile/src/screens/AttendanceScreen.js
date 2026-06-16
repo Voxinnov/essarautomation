@@ -23,6 +23,27 @@ const AttendanceScreen = () => {
     fetchTodayAttendance();
   }, []);
 
+  // Live location update every 30s while checked in
+  useEffect(() => {
+    const isCheckedIn = todayAttendance && !todayAttendance.check_out_time;
+    if (!isCheckedIn) return;
+    const interval = setInterval(async () => {
+      try {
+        const loc = await locationService.getCurrentLocation();
+        if (!loc.error) {
+          await attendanceService.updateLocation({
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            address: loc.location_address,
+          });
+        }
+      } catch (e) {
+        // Silent fail
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [todayAttendance]);
+
   const fetchTodayAttendance = async () => {
     try {
       const response = await attendanceService.getToday();
@@ -105,31 +126,8 @@ const AttendanceScreen = () => {
     );
   }
 
-  const isCheckedIn = todayAttendance && !todayAttendance.end_time;
-  const isCheckedOut = todayAttendance && todayAttendance.end_time;
-
-  useEffect(() => {
-    let interval;
-    if (isCheckedIn) {
-      interval = setInterval(async () => {
-        try {
-          const loc = await locationService.getCurrentLocation();
-          if (!loc.error) {
-            await attendanceService.updateLocation({
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-              address: loc.location_address,
-            });
-          }
-        } catch (e) {
-          // Silent fail for background location updates
-        }
-      }, 30000); // Send update every 30 seconds
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isCheckedIn]);
+  const isCheckedIn = todayAttendance && !todayAttendance.check_out_time;
+  const isCheckedOut = todayAttendance && !!todayAttendance.check_out_time;
 
   return (
     <ScrollView 
