@@ -111,25 +111,40 @@ const AttendanceScreen = () => {
   useEffect(() => {
     let interval;
     if (isCheckedIn) {
+      console.log('[Attendance Screen] User is checked in. Starting 30s live location update interval...');
       interval = setInterval(async () => {
         try {
-          const loc = await locationService.getCurrentLocation();
-          if (!loc.error) {
-            await attendanceService.updateLocation({
+          console.log('[Attendance Screen] Fetching live location coordinates...');
+          const loc = await locationService.getCurrentCoords();
+          if (loc.error) {
+            console.warn('[Attendance Screen] Could not get live coordinates:', loc.error);
+          } else {
+            console.log('[Attendance Screen] Sending live location update to server...', {
               latitude: loc.latitude,
               longitude: loc.longitude,
-              address: loc.location_address,
             });
+            const response = await attendanceService.updateLocation({
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              address: null, // Keep the existing address to avoid empty geocode
+            });
+            console.log('[Attendance Screen] Live location updated successfully:', response.data);
           }
         } catch (e) {
-          // Silent fail for background location updates
+          console.error('[Attendance Screen] Error updating live location:', e.message || e);
         }
       }, 30000); // Send update every 30 seconds
+    } else {
+      console.log('[Attendance Screen] User is not checked in. Live location interval is idle.');
     }
     return () => {
-      if (interval) clearInterval(interval);
+      if (interval) {
+        console.log('[Attendance Screen] Clearing live location interval.');
+        clearInterval(interval);
+      }
     };
   }, [isCheckedIn]);
+
 
   return (
     <ScrollView 

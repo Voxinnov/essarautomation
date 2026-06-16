@@ -126,6 +126,7 @@ const AttendancePage = () => {
     const [liveLoading, setLiveLoading] = useState(false);
     const [liveError, setLiveError] = useState('');
     const [selectedCoords, setSelectedCoords] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [zoomLevel, setZoomLevel] = useState(13);
 
     // Travel Tracking State
@@ -194,11 +195,26 @@ const AttendancePage = () => {
         if (liveLogs.length > 0 && !selectedCoords) {
             const firstWithCoords = liveLogs.find(l => (l.current_latitude || l.check_in_latitude) && (l.current_longitude || l.check_in_longitude));
             if (firstWithCoords) {
+                setSelectedUserId(firstWithCoords.user_id);
                 setSelectedCoords([parseFloat(firstWithCoords.current_latitude || firstWithCoords.check_in_latitude), parseFloat(firstWithCoords.current_longitude || firstWithCoords.check_in_longitude)]);
                 setZoomLevel(12);
             }
         }
     }, [liveLogs, selectedCoords]);
+
+    // Keep the map coordinates of the currently selected user updated when live logs refresh
+    useEffect(() => {
+        if (selectedUserId && liveLogs.length > 0) {
+            const selectedLog = liveLogs.find(l => l.user_id === selectedUserId);
+            if (selectedLog) {
+                const latStr = selectedLog.current_latitude || selectedLog.check_in_latitude;
+                const lngStr = selectedLog.current_longitude || selectedLog.check_in_longitude;
+                if (latStr && lngStr) {
+                    setSelectedCoords([parseFloat(latStr), parseFloat(lngStr)]);
+                }
+            }
+        }
+    }, [liveLogs, selectedUserId]);
 
     const fetchToday = useCallback(async () => {
         try {
@@ -776,6 +792,7 @@ const AttendancePage = () => {
                                                     key={log.id}
                                                     onClick={() => {
                                                         if (hasCoords) {
+                                                            setSelectedUserId(log.user_id);
                                                             setSelectedCoords([parseFloat(latStr), parseFloat(lngStr)]);
                                                             setZoomLevel(15);
                                                         }
@@ -786,8 +803,8 @@ const AttendancePage = () => {
                                                         borderRadius: 2,
                                                         cursor: hasCoords ? 'pointer' : 'default',
                                                         border: '1px solid',
-                                                        borderColor: selectedCoords && selectedCoords[0] === parseFloat(latStr) && selectedCoords[1] === parseFloat(lngStr) ? 'primary.main' : 'divider',
-                                                        bgcolor: selectedCoords && selectedCoords[0] === parseFloat(latStr) && selectedCoords[1] === parseFloat(lngStr) ? 'rgba(138, 3, 3, 0.04)' : 'transparent',
+                                                        borderColor: selectedUserId === log.user_id ? 'primary.main' : 'divider',
+                                                        bgcolor: selectedUserId === log.user_id ? 'rgba(138, 3, 3, 0.04)' : 'transparent',
                                                         '&:hover': {
                                                             bgcolor: hasCoords ? 'rgba(0,0,0,0.02)' : 'transparent'
                                                         }

@@ -62,4 +62,55 @@ export const locationService = {
       };
     }
   },
+
+  /**
+   * Fast, lightweight coordinate fetcher for interval updates.
+   * Uses existing permissions and cached/last known position first.
+   * Does NOT perform reverse geocoding to avoid rate limits and save data/battery.
+   */
+  getCurrentCoords: async () => {
+    try {
+      // 1. Check if permission is already granted (do NOT request or prompt)
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return {
+          latitude: null,
+          longitude: null,
+          error: 'Permission not granted',
+        };
+      }
+
+      // 2. Get last known location first (extremely fast, no GPS wait)
+      let location = await Location.getLastKnownPositionAsync();
+
+      // 3. Fallback to current position if cached is unavailable
+      if (!location) {
+        location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+      }
+
+      if (!location || !location.coords) {
+        return {
+          latitude: null,
+          longitude: null,
+          error: 'No coordinates available',
+        };
+      }
+
+      return {
+        latitude: String(location.coords.latitude),
+        longitude: String(location.coords.longitude),
+        error: null,
+      };
+    } catch (error) {
+      console.warn('Error fetching quick coordinates:', error);
+      return {
+        latitude: null,
+        longitude: null,
+        error: error.message || 'Failed to get coordinates',
+      };
+    }
+  },
 };
+
