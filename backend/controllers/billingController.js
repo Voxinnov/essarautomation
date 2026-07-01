@@ -1,4 +1,4 @@
-const { Billing, Task, Client, BankAccount } = require('../models');
+const { Billing, Task, Client, BankAccount, User, Hospital, Doctor } = require('../models');
 const { Op } = require('sequelize');
 
 const generateInvoiceNumber = () => {
@@ -23,6 +23,10 @@ const getBillings = async (req, res, next) => {
                 { model: Task, as: 'task', attributes: ['id', 'title'] },
                 { model: Client, as: 'client', attributes: ['id', 'patient_name'] },
                 { model: BankAccount, as: 'bank_account' },
+                { model: Hospital, as: 'referred_hospital', attributes: ['id', 'hospital_name'] },
+                { model: Doctor, as: 'referred_doctor', attributes: ['id', 'doctor_name'] },
+                { model: User, as: 'sales_person_ref', attributes: ['id', 'name'] },
+                { model: User, as: 'creator', attributes: ['id', 'name'] },
             ],
             limit: parseInt(limit),
             offset,
@@ -30,6 +34,18 @@ const getBillings = async (req, res, next) => {
         });
         res.json({ success: true, count, totalPages: Math.ceil(count / parseInt(limit)), currentPage: parseInt(page), data: rows });
     } catch (error) { next(error); }
+};
+
+// Convert empty strings to null for integer FK columns
+const sanitizeIntFields = (data) => {
+    const intFields = ['bank_account_id', 'task_id', 'client_id', 'referred_by_hospital_id', 'referred_by_doctor_id', 'sales_person_id', 'created_by'];
+    const sanitized = { ...data };
+    intFields.forEach(field => {
+        if (sanitized[field] === '' || sanitized[field] === undefined) {
+            sanitized[field] = null;
+        }
+    });
+    return sanitized;
 };
 
 const createBilling = async (req, res, next) => {
@@ -42,7 +58,8 @@ const createBilling = async (req, res, next) => {
                 invoice_number = generateInvoiceNumber();
             }
         }
-        const billing = await Billing.create({ ...req.body, invoice_number });
+        const body = sanitizeIntFields(req.body);
+        const billing = await Billing.create({ ...body, invoice_number, created_by: req.user.id });
         res.status(201).json({ success: true, data: billing });
     } catch (error) { next(error); }
 };
@@ -54,6 +71,10 @@ const getBilling = async (req, res, next) => {
                 { model: Task, as: 'task' },
                 { model: Client, as: 'client' },
                 { model: BankAccount, as: 'bank_account' },
+                { model: Hospital, as: 'referred_hospital' },
+                { model: Doctor, as: 'referred_doctor' },
+                { model: User, as: 'sales_person_ref', attributes: ['id', 'name'] },
+                { model: User, as: 'creator', attributes: ['id', 'name'] },
             ],
         });
         if (!billing) return res.status(404).json({ success: false, message: 'Billing not found' });
@@ -65,7 +86,8 @@ const updateBilling = async (req, res, next) => {
     try {
         const billing = await Billing.findByPk(req.params.id);
         if (!billing) return res.status(404).json({ success: false, message: 'Billing not found' });
-        await billing.update(req.body);
+        const body = sanitizeIntFields(req.body);
+        await billing.update(body);
         res.json({ success: true, data: billing });
     } catch (error) { next(error); }
 };

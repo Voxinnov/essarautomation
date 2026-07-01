@@ -17,6 +17,10 @@ const Billing = sequelize.define('Billing', {
     po_date: { type: DataTypes.DATEONLY },
     payment_terms: { type: DataTypes.STRING },
     sales_person: { type: DataTypes.STRING },
+    sales_person_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
+    referred_by_hospital_id: { type: DataTypes.INTEGER, references: { model: 'hospitals', key: 'id' } },
+    referred_by_doctor_id: { type: DataTypes.INTEGER, references: { model: 'doctors', key: 'id' } },
+    created_by: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
     items: { type: DataTypes.JSON }, // Store items as JSON array: [{name, unit, qty, price, discount, tax, total}]
     shipping_charges: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     discount_total: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
@@ -30,7 +34,8 @@ const Billing = sequelize.define('Billing', {
     cgst_percent: { type: DataTypes.DECIMAL(5, 2), defaultValue: 9 },
     sgst_percent: { type: DataTypes.DECIMAL(5, 2), defaultValue: 9 },
     private_notes: { type: DataTypes.TEXT },
-    status: { type: DataTypes.ENUM('pending', 'paid'), defaultValue: 'pending' },
+    shipping_address: { type: DataTypes.TEXT },
+    status: { type: DataTypes.ENUM('pending', 'paid', 'draft'), defaultValue: 'pending' },
     notes: { type: DataTypes.TEXT },
 }, { tableName: 'billing' });
 

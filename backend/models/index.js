@@ -22,6 +22,8 @@ const ProformaInvoiceItem = require('./ProformaInvoiceItem');
 const CompanyProfile = require('./CompanyProfile');
 const Attendance = require('./Attendance');
 const Notification = require('./Notification');
+const LeaveRequest = require('./LeaveRequest');
+
 
 
 // Hospital - Doctor
@@ -74,6 +76,18 @@ Billing.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
 BankAccount.hasMany(Billing, { foreignKey: 'bank_account_id', as: 'billings' });
 Billing.belongsTo(BankAccount, { foreignKey: 'bank_account_id', as: 'bank_account' });
 
+Hospital.hasMany(Billing, { foreignKey: 'referred_by_hospital_id', as: 'hospital_billings' });
+Billing.belongsTo(Hospital, { foreignKey: 'referred_by_hospital_id', as: 'referred_hospital' });
+
+Doctor.hasMany(Billing, { foreignKey: 'referred_by_doctor_id', as: 'doctor_billings' });
+Billing.belongsTo(Doctor, { foreignKey: 'referred_by_doctor_id', as: 'referred_doctor' });
+
+User.hasMany(Billing, { foreignKey: 'sales_person_id', as: 'sales_billings' });
+Billing.belongsTo(User, { foreignKey: 'sales_person_id', as: 'sales_person_ref' });
+
+User.hasMany(Billing, { foreignKey: 'created_by', as: 'created_billings', onDelete: 'SET NULL' });
+Billing.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
 // Expense associations
 User.hasMany(Expense, { foreignKey: 'created_by', as: 'expenses', onDelete: 'SET NULL' });
 Expense.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
@@ -111,6 +125,15 @@ ProformaInvoice.belongsTo(BankAccount, { foreignKey: 'bank_account_id', as: 'ban
 User.hasMany(ProformaInvoice, { foreignKey: 'created_by', as: 'proforma_invoices', onDelete: 'SET NULL' });
 ProformaInvoice.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
+Hospital.hasMany(ProformaInvoice, { foreignKey: 'referred_by_hospital_id', as: 'hospital_proformas' });
+ProformaInvoice.belongsTo(Hospital, { foreignKey: 'referred_by_hospital_id', as: 'referred_hospital' });
+
+Doctor.hasMany(ProformaInvoice, { foreignKey: 'referred_by_doctor_id', as: 'doctor_proformas' });
+ProformaInvoice.belongsTo(Doctor, { foreignKey: 'referred_by_doctor_id', as: 'referred_doctor' });
+
+User.hasMany(ProformaInvoice, { foreignKey: 'sales_person_id', as: 'sales_proformas' });
+ProformaInvoice.belongsTo(User, { foreignKey: 'sales_person_id', as: 'sales_person_ref' });
+
 ProformaInvoice.hasMany(ProformaInvoiceItem, { foreignKey: 'proforma_invoice_id', as: 'items', onDelete: 'CASCADE' });
 ProformaInvoiceItem.belongsTo(ProformaInvoice, { foreignKey: 'proforma_invoice_id', as: 'proforma_invoice' });
 
@@ -124,6 +147,12 @@ Attendance.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 // Notification associations
 User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications', onDelete: 'CASCADE' });
 Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// LeaveRequest associations
+User.hasMany(LeaveRequest, { foreignKey: 'userId', as: 'leaveRequests', onDelete: 'CASCADE' });
+LeaveRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+LeaveRequest.belongsTo(User, { foreignKey: 'approvedBy', as: 'approver' });
+
 
 
 module.exports = {
@@ -151,4 +180,5 @@ module.exports = {
     CompanyProfile,
     Attendance,
     Notification,
+    LeaveRequest,
 };

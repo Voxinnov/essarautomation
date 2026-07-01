@@ -67,7 +67,17 @@ exports.getPermissions = async (req, res) => {
         const permissionGroups = [
             {
                 module: 'Dashboard',
-                permissions: [{ key: 'dashboard_view', label: 'View Dashboard' }]
+                permissions: [
+                    { key: 'dashboard_view', label: 'View Dashboard' },
+                    { key: 'dashboard_tasks_stats', label: 'View Tasks Stats (Stat Cards)' },
+                    { key: 'dashboard_billing_stats', label: 'View Billing Stats (Stat Cards)' },
+                    { key: 'dashboard_expenses_stats', label: 'View Expenses Stats (Stat Cards)' },
+                    { key: 'dashboard_clients_stats', label: 'View Clients Stats (Stat Cards)' },
+                    { key: 'dashboard_task_status_chart', label: 'View Task Status Distribution Chart' },
+                    { key: 'dashboard_task_trend_chart', label: 'View Monthly Task Trend Chart' },
+                    { key: 'dashboard_recent_tasks', label: 'View Recent Tasks Table' },
+                    { key: 'dashboard_employee_hours', label: 'View Employee Work Hours List' }
+                ]
             },
             {
                 module: 'Tasks',
@@ -173,6 +183,14 @@ exports.getPermissions = async (req, res) => {
             {
                 module: 'Reports',
                 permissions: [{ key: 'reports_view', label: 'View Reports' }]
+            },
+            {
+                module: 'Leave Management',
+                permissions: [
+                    { key: 'leaves_view', label: 'View Leaves' },
+                    { key: 'leaves_request', label: 'Request/Cancel Leaves' },
+                    { key: 'leaves_approve', label: 'Approve/Reject Leaves' }
+                ]
             },
             {
                 module: 'Settings',

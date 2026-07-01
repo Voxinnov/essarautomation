@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS billing (
   invoice_number VARCHAR(50) UNIQUE,
   status ENUM('pending', 'paid') DEFAULT 'pending',
   notes TEXT,
+  shipping_address TEXT,
   due_date DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -176,3 +177,23 @@ CREATE TABLE IF NOT EXISTS attendance (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE KEY unique_user_date (user_id, date)
 );
+
+-- Leave Requests table
+CREATE TABLE IF NOT EXISTS leave_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  leave_type ENUM('casual', 'medical', 'emergency') NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  half_day ENUM('none', 'first_half', 'second_half') DEFAULT 'none',
+  total_days DECIMAL(5,1) NOT NULL,
+  reason TEXT NOT NULL,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  approved_by INT,
+  comment TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
+);
+

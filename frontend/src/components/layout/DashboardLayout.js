@@ -11,7 +11,8 @@ import {
     Update, AccessTime, Receipt, AttachMoney, Report, Settings,
     Menu as MenuIcon, Logout, AccountCircle, Notifications,
     ChevronLeft, Business, Inventory, SupervisorAccount, AdminPanelSettings,
-    ExpandLess, ExpandMore, ListAlt, AccountBalance, Description, Fingerprint
+    ExpandLess, ExpandMore, ListAlt, AccountBalance, Description, Fingerprint,
+    EventNote
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { notificationService } from '../../services';
@@ -27,6 +28,7 @@ const navItems = [
     { text: 'Work Updates', icon: <Update />, path: '/work-updates', permission: 'work_updates_view' },
     { text: 'Time Tracking', icon: <AccessTime />, path: '/time-tracking', permission: 'time_tracking_view' },
     { text: 'Attendance', icon: <Fingerprint />, path: '/attendance', permission: 'attendance_view' },
+    { text: 'Leave Requests', icon: <EventNote />, path: '/leaves', permission: 'leaves_view' },
     { text: 'Billing', icon: <Receipt />, path: '/billing', permission: 'billing_view' },
     { text: 'Proforma Invoices', icon: <Description />, path: '/proforma', permission: 'proforma_view' },
     { text: 'Expenses', icon: <AttachMoney />, path: '/expenses', permission: 'expenses_view' },

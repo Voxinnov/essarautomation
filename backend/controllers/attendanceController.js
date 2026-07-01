@@ -452,6 +452,25 @@ const getTravelReport = async (req, res, next) => {
 const updateLocation = async (req, res, next) => {
     try {
         const { latitude, longitude, address } = req.body;
+
+        // Validation: Check presence
+        if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+            return res.status(400).json({
+                success: false,
+                message: 'Latitude and longitude are required.',
+            });
+        }
+
+        // Validation: Convert to number and check validity/ranges
+        const latNum = parseFloat(latitude);
+        const lngNum = parseFloat(longitude);
+        if (isNaN(latNum) || isNaN(lngNum) || latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid coordinates. Latitude must be between -90 and 90. Longitude must be between -180 and 180.',
+            });
+        }
+
         const todayStr = getTodayIST();
 
         const attendance = await Attendance.findOne({
@@ -466,8 +485,8 @@ const updateLocation = async (req, res, next) => {
         }
 
         await attendance.update({
-            current_latitude: latitude,
-            current_longitude: longitude,
+            current_latitude: latNum,
+            current_longitude: lngNum,
             current_address: address || attendance.current_address,
         });
 

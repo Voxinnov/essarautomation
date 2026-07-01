@@ -15,8 +15,12 @@ const ProformaInvoice = sequelize.define('ProformaInvoice', {
     grand_total: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     notes: { type: DataTypes.TEXT },
     terms_conditions: { type: DataTypes.TEXT },
+    shipping_address: { type: DataTypes.TEXT },
     status: { type: DataTypes.ENUM('Draft', 'Sent', 'Approved', 'Expired', 'Converted to Invoice'), defaultValue: 'Draft' },
     bank_account_id: { type: DataTypes.INTEGER, references: { model: 'bank_accounts', key: 'id' } },
+    referred_by_hospital_id: { type: DataTypes.INTEGER, references: { model: 'hospitals', key: 'id' } },
+    referred_by_doctor_id: { type: DataTypes.INTEGER, references: { model: 'doctors', key: 'id' } },
+    sales_person_id: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } },
     created_by: { type: DataTypes.INTEGER, references: { model: 'users', key: 'id' } }
 }, {
     tableName: 'proforma_invoices',
