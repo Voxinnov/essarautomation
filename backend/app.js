@@ -62,6 +62,7 @@ app.use('/api/proforma', require('./routes/proforma'));
 app.use('/api/company-profile', require('./routes/companyProfile'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/leaves', require('./routes/leaves'));
 
 // Health check
 app.get('/api/health', (req, res) => {

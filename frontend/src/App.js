@@ -17,16 +17,20 @@ import DoctorsPage from './pages/doctors/DoctorsPage';
 import WorkUpdatesPage from './pages/workupdates/WorkUpdatesPage';
 import TimeTrackingPage from './pages/time/TimeTrackingPage';
 import BillingPage from './pages/billing/BillingPage';
+import NewInvoicePage from './pages/billing/NewInvoicePage';
 import ExpensesPage from './pages/expenses/ExpensesPage';
 import ReportsPage from './pages/reports/ReportsPage';
 import SettingsPage from './pages/reports/SettingsPage';
 import StockPage from './pages/stock/StockPage';
 import ProformaPage from './pages/proforma/ProformaPage';
+import NewProformaPage from './pages/proforma/NewProformaPage';
 import UsersPage from './pages/admin/UsersPage';
 import RolesPage from './pages/admin/RolesPage';
 import StatusManagementPage from './pages/settings/StatusManagementPage';
 import BankAccountsPage from './pages/settings/BankAccountsPage';
 import AttendancePage from './pages/attendance/AttendancePage';
+import LeavesPage from './pages/leaves/LeavesPage';
+
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -73,7 +77,11 @@ function App() {
             <Route path="/work-updates" element={<PrivateRoute><PermissionRoute permissionKey="work_updates_view"><WorkUpdatesPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/time-tracking" element={<PrivateRoute><PermissionRoute permissionKey="time_tracking_view"><TimeTrackingPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/billing" element={<PrivateRoute><PermissionRoute permissionKey="billing_view"><BillingPage /></PermissionRoute></PrivateRoute>} />
+            <Route path="/billing/new" element={<PrivateRoute><PermissionRoute permissionKey="billing_view"><NewInvoicePage /></PermissionRoute></PrivateRoute>} />
+            <Route path="/billing/:id/edit" element={<PrivateRoute><PermissionRoute permissionKey="billing_view"><NewInvoicePage /></PermissionRoute></PrivateRoute>} />
             <Route path="/proforma" element={<PrivateRoute><PermissionRoute permissionKey="proforma_view"><ProformaPage /></PermissionRoute></PrivateRoute>} />
+            <Route path="/proforma/new" element={<PrivateRoute><PermissionRoute permissionKey="proforma_view"><NewProformaPage /></PermissionRoute></PrivateRoute>} />
+            <Route path="/proforma/:id/edit" element={<PrivateRoute><PermissionRoute permissionKey="proforma_view"><NewProformaPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/expenses" element={<PrivateRoute><PermissionRoute permissionKey="expenses_view"><ExpensesPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/stock" element={<PrivateRoute><PermissionRoute permissionKey="stock_view"><StockPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/reports" element={<PrivateRoute><PermissionRoute permissionKey="reports_view"><ReportsPage /></PermissionRoute></PrivateRoute>} />
@@ -83,6 +91,7 @@ function App() {
             <Route path="/users" element={<PrivateRoute><PermissionRoute permissionKey="users_manage"><UsersPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/role-management" element={<PrivateRoute><PermissionRoute permissionKey="roles_manage"><RolesPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/attendance" element={<PrivateRoute><PermissionRoute permissionKey="attendance_view"><AttendancePage /></PermissionRoute></PrivateRoute>} />
+            <Route path="/leaves" element={<PrivateRoute><PermissionRoute permissionKey="leaves_view"><LeavesPage /></PermissionRoute></PrivateRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

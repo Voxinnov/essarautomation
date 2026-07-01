@@ -157,3 +157,15 @@ export const notificationService = {
         return `${baseURL}/notifications/stream?token=${token}`;
     }
 };
+
+export const leaveService = {
+    getAll: (params) => api.get('/leaves/all', { params }),
+    getMy: (params) => api.get('/leaves/my', { params }),
+    getById: (id) => api.get(`/leaves/${id}`),
+    create: (data) => api.post('/leaves', data),
+    update: (id, data) => api.put(`/leaves/${id}`, data),
+    delete: (id) => api.delete(`/leaves/${id}`),
+    approve: (id, data) => api.put(`/leaves/${id}/approve`, data),
+    getStats: (params) => api.get('/leaves/stats', { params }),
+};
+

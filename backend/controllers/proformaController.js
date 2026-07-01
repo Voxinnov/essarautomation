@@ -1,4 +1,4 @@
-const { ProformaInvoice, ProformaInvoiceItem, Client, BankAccount, User, Product, Billing, sequelize } = require('../models');
+const { ProformaInvoice, ProformaInvoiceItem, Client, BankAccount, User, Product, Billing, Hospital, Doctor, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 exports.getDashboardStats = async (req, res) => {
@@ -23,7 +23,10 @@ exports.getProformaInvoices = async (req, res) => {
         const invoices = await ProformaInvoice.findAll({
             include: [
                 { model: Client, as: 'client' },
-                { model: User, as: 'creator', attributes: ['name'] },
+                { model: User, as: 'creator', attributes: ['id', 'name'] },
+                { model: User, as: 'sales_person_ref', attributes: ['id', 'name'] },
+                { model: Hospital, as: 'referred_hospital', attributes: ['id', 'hospital_name'] },
+                { model: Doctor, as: 'referred_doctor', attributes: ['id', 'doctor_name'] },
                 { 
                     model: ProformaInvoiceItem, 
                     as: 'items',
@@ -44,7 +47,10 @@ exports.getProformaInvoice = async (req, res) => {
             include: [
                 { model: Client, as: 'client' },
                 { model: BankAccount, as: 'bank_account' },
-                { model: User, as: 'creator', attributes: ['name'] },
+                { model: User, as: 'creator', attributes: ['id', 'name'] },
+                { model: User, as: 'sales_person_ref', attributes: ['id', 'name'] },
+                { model: Hospital, as: 'referred_hospital', attributes: ['id', 'hospital_name'] },
+                { model: Doctor, as: 'referred_doctor', attributes: ['id', 'doctor_name'] },
                 { 
                     model: ProformaInvoiceItem, 
                     as: 'items',
@@ -89,17 +95,23 @@ exports.createProformaInvoice = async (req, res) => {
         const {
             client_id, date, valid_until, po_number, items,
             sub_total, cgst, sgst, rounding, grand_total,
-            notes, terms_conditions, bank_account_id
+            notes, terms_conditions, bank_account_id,
+            sales_person_id, referred_by_hospital_id, referred_by_doctor_id,
+            shipping_address
         } = req.body;
 
         const invoice_number = await generateInvoiceNumber();
 
         const invoice = await ProformaInvoice.create({
-            invoice_number, client_id, date, valid_until, po_number,
+            invoice_number, client_id: client_id || null, date, valid_until, po_number,
             sub_total, cgst, sgst, rounding, grand_total,
-            notes, terms_conditions, bank_account_id,
+            notes, terms_conditions, bank_account_id: bank_account_id || null,
             status: 'Draft',
-            created_by: req.user.id
+            created_by: req.user.id,
+            sales_person_id: sales_person_id || null,
+            referred_by_hospital_id: referred_by_hospital_id || null,
+            referred_by_doctor_id: referred_by_doctor_id || null,
+            shipping_address
         }, { transaction: t });
 
         if (items && items.length > 0) {
@@ -141,13 +153,19 @@ exports.updateProformaInvoice = async (req, res) => {
         const {
             client_id, date, valid_until, po_number, items,
             sub_total, cgst, sgst, rounding, grand_total,
-            notes, terms_conditions, bank_account_id, status
+            notes, terms_conditions, bank_account_id, status,
+            sales_person_id, referred_by_hospital_id, referred_by_doctor_id,
+            shipping_address
         } = req.body;
 
         await invoice.update({
-            client_id, date, valid_until, po_number,
+            client_id: client_id || null, date, valid_until, po_number,
             sub_total, cgst, sgst, rounding, grand_total,
-            notes, terms_conditions, bank_account_id, status
+            notes, terms_conditions, bank_account_id: bank_account_id || null, status,
+            sales_person_id: sales_person_id || null,
+            referred_by_hospital_id: referred_by_hospital_id || null,
+            referred_by_doctor_id: referred_by_doctor_id || null,
+            shipping_address
         }, { transaction: t });
 
         if (items) {
@@ -209,14 +227,26 @@ exports.convertToInvoice = async (req, res) => {
             mrp: item.mrp
         }));
 
-        // Generate new invoice number for billing
-        const lastBilling = await Billing.findOne({ order: [['id', 'DESC']] });
+        // Generate a unique invoice number
+        const lastBilling = await Billing.findOne({ 
+            where: { invoice_prefix: 'ESSAR' },
+            order: [['id', 'DESC']] 
+        });
         let next_no = 1001;
         if (lastBilling && lastBilling.invoice_no) {
             const lastNo = parseInt(lastBilling.invoice_no);
             if (!isNaN(lastNo)) next_no = lastNo + 1;
         }
-        const invoice_number = `ESSAR-${next_no}`;
+        // Ensure uniqueness with a loop
+        let invoice_number = `ESSAR-${next_no}`;
+        let attempts = 0;
+        while (attempts < 10) {
+            const existing = await Billing.findOne({ where: { invoice_number } });
+            if (!existing) break;
+            next_no++;
+            invoice_number = `ESSAR-${next_no}`;
+            attempts++;
+        }
 
         const billing = await Billing.create({
             client_id: proforma.client_id,
@@ -235,7 +265,12 @@ exports.convertToInvoice = async (req, res) => {
             status: 'pending',
             terms_conditions: proforma.terms_conditions,
             notes: proforma.notes,
-            billing_type: 'fixed'
+            billing_type: 'fixed',
+            created_by: req.user.id,
+            sales_person_id: proforma.sales_person_id,
+            referred_by_hospital_id: proforma.referred_by_hospital_id,
+            referred_by_doctor_id: proforma.referred_by_doctor_id,
+            shipping_address: proforma.shipping_address
         }, { transaction: t });
 
         // Update Proforma status
