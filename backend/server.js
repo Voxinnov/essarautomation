@@ -10,6 +10,20 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log('✅ Database connection established successfully.');
 
+        // Add new columns safely (runs on both dev and prod)
+        try {
+            await sequelize.query(`
+                ALTER TABLE attendance
+                ADD COLUMN IF NOT EXISTS current_location_updated_at DATETIME DEFAULT NULL;
+            `);
+            console.log('✅ Column current_location_updated_at ensured.');
+        } catch (e) {
+            // Column may already exist on some DB versions that don't support IF NOT EXISTS
+            if (!e.message.includes('Duplicate column')) {
+                console.warn('⚠️  Could not run location timestamp migration:', e.message);
+            }
+        }
+
         // Sync all models (alter in dev, no-sync in prod)
         if (process.env.NODE_ENV === 'development') {
             await sequelize.sync({ alter: false });

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 
 export const AuthContext = createContext();
@@ -41,6 +42,8 @@ export const AuthProvider = ({ children }) => {
       console.log('Saving token...');
       if (token) {
         await SecureStore.setItemAsync('userToken', token);
+        // Mirror to AsyncStorage so background tasks can access it
+        await AsyncStorage.setItem('userToken', token);
       }
       console.log('Setting user state...', userData);
       setUser(userData);
@@ -55,6 +58,9 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await SecureStore.deleteItemAsync('userToken');
+      // Clear AsyncStorage mirror too
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('isCheckedIn');
       setUser(null);
     } catch (e) {
       console.log('Logout error', e);

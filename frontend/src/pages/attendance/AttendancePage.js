@@ -126,6 +126,7 @@ const AttendancePage = () => {
     const [liveLoading, setLiveLoading] = useState(false);
     const [liveError, setLiveError] = useState('');
     const [selectedCoords, setSelectedCoords] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [zoomLevel, setZoomLevel] = useState(13);
 
     // Travel Tracking State
@@ -194,11 +195,26 @@ const AttendancePage = () => {
         if (liveLogs.length > 0 && !selectedCoords) {
             const firstWithCoords = liveLogs.find(l => (l.current_latitude || l.check_in_latitude) && (l.current_longitude || l.check_in_longitude));
             if (firstWithCoords) {
+                setSelectedUserId(firstWithCoords.user_id);
                 setSelectedCoords([parseFloat(firstWithCoords.current_latitude || firstWithCoords.check_in_latitude), parseFloat(firstWithCoords.current_longitude || firstWithCoords.check_in_longitude)]);
                 setZoomLevel(12);
             }
         }
     }, [liveLogs, selectedCoords]);
+
+    // Keep the map coordinates of the currently selected user updated when live logs refresh
+    useEffect(() => {
+        if (selectedUserId && liveLogs.length > 0) {
+            const selectedLog = liveLogs.find(l => l.user_id === selectedUserId);
+            if (selectedLog) {
+                const latStr = selectedLog.current_latitude || selectedLog.check_in_latitude;
+                const lngStr = selectedLog.current_longitude || selectedLog.check_in_longitude;
+                if (latStr && lngStr) {
+                    setSelectedCoords([parseFloat(latStr), parseFloat(lngStr)]);
+                }
+            }
+        }
+    }, [liveLogs, selectedUserId]);
 
     const fetchToday = useCallback(async () => {
         try {
@@ -770,12 +786,15 @@ const AttendancePage = () => {
                                             const latStr = log.current_latitude || log.check_in_latitude;
                                             const lngStr = log.current_longitude || log.check_in_longitude;
                                             const hasCoords = latStr && lngStr;
+                                            const lastUpdated = log.current_location_updated_at || log.updatedAt;
+                                            const isLiveLocation = !!log.current_latitude;
 
                                             return (
                                                 <Box
                                                     key={log.id}
                                                     onClick={() => {
                                                         if (hasCoords) {
+                                                            setSelectedUserId(log.user_id);
                                                             setSelectedCoords([parseFloat(latStr), parseFloat(lngStr)]);
                                                             setZoomLevel(15);
                                                         }
@@ -786,8 +805,8 @@ const AttendancePage = () => {
                                                         borderRadius: 2,
                                                         cursor: hasCoords ? 'pointer' : 'default',
                                                         border: '1px solid',
-                                                        borderColor: selectedCoords && selectedCoords[0] === parseFloat(latStr) && selectedCoords[1] === parseFloat(lngStr) ? 'primary.main' : 'divider',
-                                                        bgcolor: selectedCoords && selectedCoords[0] === parseFloat(latStr) && selectedCoords[1] === parseFloat(lngStr) ? 'rgba(138, 3, 3, 0.04)' : 'transparent',
+                                                        borderColor: selectedUserId === log.user_id ? 'primary.main' : 'divider',
+                                                        bgcolor: selectedUserId === log.user_id ? 'rgba(138, 3, 3, 0.04)' : 'transparent',
                                                         '&:hover': {
                                                             bgcolor: hasCoords ? 'rgba(0,0,0,0.02)' : 'transparent'
                                                         }
@@ -808,6 +827,11 @@ const AttendancePage = () => {
                                                                 In: {formatTime(log.check_in_time)}
                                                                 {log.check_out_time && ` | Out: ${formatTime(log.check_out_time)}`}
                                                             </Typography>
+                                                            {lastUpdated && (
+                                                                <Typography variant="caption" display="block" sx={{ color: isLiveLocation ? 'success.main' : 'text.secondary', fontWeight: isLiveLocation ? 600 : 400 }}>
+                                                                    {isLiveLocation ? '📡 Live' : '📍 Check-in'} · {formatTime(lastUpdated)}
+                                                                </Typography>
+                                                            )}
                                                         </Box>
                                                         <Box>
                                                             <Chip
@@ -938,6 +962,11 @@ const AttendancePage = () => {
                                                                 {log.check_in_address && (
                                                                     <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                                                                         📍 {log.check_in_address}
+                                                                    </Typography>
+                                                                )}
+                                                                {(log.current_location_updated_at || log.updatedAt) && (
+                                                                    <Typography variant="caption" display="block" sx={{ mt: 0.5, color: log.current_latitude ? 'success.main' : 'text.secondary', fontWeight: 600 }}>
+                                                                        {log.current_latitude ? '📡 Live location' : '📍 Check-in location'} · Last updated: {new Date(log.current_location_updated_at || log.updatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
                                                                     </Typography>
                                                                 )}
                                                             </Box>
