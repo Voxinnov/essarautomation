@@ -488,6 +488,7 @@ const updateLocation = async (req, res, next) => {
             current_latitude: latNum,
             current_longitude: lngNum,
             current_address: address || attendance.current_address,
+            current_location_updated_at: new Date(),
         });
 
         res.json({ success: true, data: attendance });

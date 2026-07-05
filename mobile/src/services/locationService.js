@@ -47,8 +47,8 @@ export const locationService = {
       }
 
       return {
-        latitude: String(latitude),
-        longitude: String(longitude),
+        latitude,
+        longitude,
         location_address,
         error: null,
       };
@@ -99,8 +99,8 @@ export const locationService = {
       }
 
       return {
-        latitude: String(location.coords.latitude),
-        longitude: String(location.coords.longitude),
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
         error: null,
       };
     } catch (error) {
@@ -110,6 +110,50 @@ export const locationService = {
         longitude: null,
         error: error.message || 'Failed to get coordinates',
       };
+    }
+  },
+
+  /**
+   * Sequential check and request for both foreground and background location permissions.
+   * On Android 10+ and iOS, background permission must be requested after foreground permission is granted.
+   */
+  requestBackgroundLocationPermissions: async () => {
+    try {
+      console.log('[Location Service] Checking foreground permissions...');
+      const { status: existingForegroundStatus } = await Location.getForegroundPermissionsAsync();
+      let foregroundStatus = existingForegroundStatus;
+      
+      if (foregroundStatus !== 'granted') {
+        console.log('[Location Service] Requesting foreground permissions...');
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        foregroundStatus = status;
+      }
+
+      if (foregroundStatus !== 'granted') {
+        console.warn('[Location Service] Foreground location permission was denied.');
+        return false;
+      }
+
+      console.log('[Location Service] Checking background permissions...');
+      const { status: existingBackgroundStatus } = await Location.getBackgroundPermissionsAsync();
+      let backgroundStatus = existingBackgroundStatus;
+
+      if (backgroundStatus !== 'granted') {
+        console.log('[Location Service] Requesting background permissions...');
+        const { status } = await Location.requestBackgroundPermissionsAsync();
+        backgroundStatus = status;
+      }
+
+      if (backgroundStatus !== 'granted') {
+        console.warn('[Location Service] Background location permission was denied.');
+        return false;
+      }
+
+      console.log('[Location Service] Both foreground and background permissions granted!');
+      return true;
+    } catch (error) {
+      console.error('[Location Service] Error during background permission request:', error);
+      return false;
     }
   },
 };

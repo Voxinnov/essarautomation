@@ -8,9 +8,16 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
+  AppState,
+  Platform,
+  Linking,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { attendanceService } from '../services/attendanceService';
 import { locationService } from '../services/locationService';
+import { backgroundLocationService } from '../services/backgroundLocationService';
+import { locationQueue } from '../services/locationQueue';
 import { COLORS, BORDER_RADIUS, SPACING, SHADOWS } from '../utils/theme';
 
 const AttendanceScreen = () => {
@@ -21,17 +28,69 @@ const AttendanceScreen = () => {
 
   useEffect(() => {
     fetchTodayAttendance();
+
+    // Monitor AppState to sync queued location updates when app returns to foreground
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('[Attendance Screen] App returned to foreground. Syncing queued locations...');
+        locationQueue.syncQueue();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const fetchTodayAttendance = async () => {
     try {
       const response = await attendanceService.getToday();
-      setTodayAttendance(response.data.data);
+      const attendance = response.data.data;
+      setTodayAttendance(attendance);
+
+      // Save local check-in status for the background task to reference
+      const isCheckedIn = attendance && !attendance.check_out_time;
+      await AsyncStorage.setItem('isCheckedIn', isCheckedIn ? 'true' : 'false');
+
+      if (isCheckedIn) {
+        // Trigger background location task start if not already active
+        await startBackgroundTrackingFlow();
+      } else {
+        // Stop background location updates
+        await backgroundLocationService.stopTracking();
+      }
     } catch (e) {
       console.log('Error fetching attendance', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const startBackgroundTrackingFlow = async () => {
+    const hasPermission = await locationService.requestBackgroundLocationPermissions();
+    if (hasPermission) {
+      await backgroundLocationService.startTracking();
+      // Try to sync any remaining queued locations
+      locationQueue.syncQueue();
+    } else {
+      Alert.alert(
+        'Background Location Required',
+        'Allowing background location access "All the time" is required to track your attendance during your shift. Please update this in the application settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Open Settings', 
+            onPress: () => {
+              if (Platform.OS === 'ios') {
+                Linking.openURL('app-settings:');
+              } else {
+                Linking.openSettings();
+              }
+            } 
+          }
+        ]
+      );
     }
   };
 
@@ -56,7 +115,14 @@ const AttendanceScreen = () => {
         address: loc.location_address,
       });
 
+      // Save local check-in status
+      await AsyncStorage.setItem('isCheckedIn', 'true');
+
       Alert.alert('Success', 'Checked in successfully!');
+      
+      // Start background tracking
+      await startBackgroundTrackingFlow();
+      
       fetchTodayAttendance();
     } catch (e) {
       console.log('Error checking in', e);
@@ -82,6 +148,15 @@ const AttendanceScreen = () => {
         address: loc.location_address,
       });
 
+      // Save local check-in status
+      await AsyncStorage.setItem('isCheckedIn', 'false');
+
+      // Stop background tracking
+      await backgroundLocationService.stopTracking();
+
+      // Clear sync queue since shift ended
+      await locationQueue.clearQueue();
+
       Alert.alert('Success', 'Checked out successfully!');
       fetchTodayAttendance();
     } catch (e) {
@@ -97,6 +172,46 @@ const AttendanceScreen = () => {
     return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Derived state — must be computed before any hooks
+  const isCheckedIn = todayAttendance && !todayAttendance.check_out_time;
+  const isCheckedOut = todayAttendance && todayAttendance.check_out_time;
+
+  // Foreground watcher — must be declared before early return to comply with Rules of Hooks
+  useEffect(() => {
+    let subscription;
+
+    const startForegroundWatching = async () => {
+      try {
+        console.log('[Attendance Screen] Starting foreground position watcher...');
+        subscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 30000, // 30 seconds
+            distanceInterval: 0, // Update even if stationary
+          },
+          (location) => {
+            const { latitude, longitude } = location.coords;
+            console.log('[Attendance Screen Foreground] Received coordinates:', latitude, longitude);
+            locationQueue.queueLocation(latitude, longitude);
+          }
+        );
+      } catch (err) {
+        console.warn('[Attendance Screen] Error starting foreground watcher:', err);
+      }
+    };
+
+    if (isCheckedIn) {
+      startForegroundWatching();
+    }
+
+    return () => {
+      if (subscription) {
+        console.log('[Attendance Screen] Removing foreground position watcher...');
+        subscription.remove();
+      }
+    };
+  }, [isCheckedIn]);
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -104,47 +219,6 @@ const AttendanceScreen = () => {
       </View>
     );
   }
-
-  const isCheckedIn = todayAttendance && !todayAttendance.check_out_time;
-  const isCheckedOut = todayAttendance && todayAttendance.check_out_time;
-
-  useEffect(() => {
-    let interval;
-    if (isCheckedIn) {
-      console.log('[Attendance Screen] User is checked in. Starting 30s live location update interval...');
-      interval = setInterval(async () => {
-        try {
-          console.log('[Attendance Screen] Fetching live location coordinates...');
-          const loc = await locationService.getCurrentCoords();
-          if (loc.error) {
-            console.warn('[Attendance Screen] Could not get live coordinates:', loc.error);
-          } else {
-            console.log('[Attendance Screen] Sending live location update to server...', {
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-            });
-            const response = await attendanceService.updateLocation({
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-              address: null, // Keep the existing address to avoid empty geocode
-            });
-            console.log('[Attendance Screen] Live location updated successfully:', response.data);
-          }
-        } catch (e) {
-          console.error('[Attendance Screen] Error updating live location:', e.message || e);
-        }
-      }, 30000); // Send update every 30 seconds
-    } else {
-      console.log('[Attendance Screen] User is not checked in. Live location interval is idle.');
-    }
-    return () => {
-      if (interval) {
-        console.log('[Attendance Screen] Clearing live location interval.');
-        clearInterval(interval);
-      }
-    };
-  }, [isCheckedIn]);
-
 
   return (
     <ScrollView 

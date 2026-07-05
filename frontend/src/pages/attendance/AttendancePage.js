@@ -786,6 +786,8 @@ const AttendancePage = () => {
                                             const latStr = log.current_latitude || log.check_in_latitude;
                                             const lngStr = log.current_longitude || log.check_in_longitude;
                                             const hasCoords = latStr && lngStr;
+                                            const lastUpdated = log.current_location_updated_at || log.updatedAt;
+                                            const isLiveLocation = !!log.current_latitude;
 
                                             return (
                                                 <Box
@@ -825,6 +827,11 @@ const AttendancePage = () => {
                                                                 In: {formatTime(log.check_in_time)}
                                                                 {log.check_out_time && ` | Out: ${formatTime(log.check_out_time)}`}
                                                             </Typography>
+                                                            {lastUpdated && (
+                                                                <Typography variant="caption" display="block" sx={{ color: isLiveLocation ? 'success.main' : 'text.secondary', fontWeight: isLiveLocation ? 600 : 400 }}>
+                                                                    {isLiveLocation ? '📡 Live' : '📍 Check-in'} · {formatTime(lastUpdated)}
+                                                                </Typography>
+                                                            )}
                                                         </Box>
                                                         <Box>
                                                             <Chip
@@ -955,6 +962,11 @@ const AttendancePage = () => {
                                                                 {log.check_in_address && (
                                                                     <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                                                                         📍 {log.check_in_address}
+                                                                    </Typography>
+                                                                )}
+                                                                {(log.current_location_updated_at || log.updatedAt) && (
+                                                                    <Typography variant="caption" display="block" sx={{ mt: 0.5, color: log.current_latitude ? 'success.main' : 'text.secondary', fontWeight: 600 }}>
+                                                                        {log.current_latitude ? '📡 Live location' : '📍 Check-in location'} · Last updated: {new Date(log.current_location_updated_at || log.updatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
                                                                     </Typography>
                                                                 )}
                                                             </Box>
