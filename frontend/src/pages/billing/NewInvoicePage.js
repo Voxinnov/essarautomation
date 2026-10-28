@@ -4,7 +4,8 @@ import {
     Box, Card, Typography, TextField, Button, Grid, IconButton,
     FormControl, Select, MenuItem, InputLabel, Chip, Radio, RadioGroup,
     FormControlLabel, Checkbox, InputAdornment, Alert, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions
+    TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions,
+    ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import { Add, Delete, Send, AttachFile, Refresh, Info } from '@mui/icons-material';
 import { billingService, clientService, stockService, doctorService, hospitalService, authService, companyProfileService } from '../../services';
@@ -40,7 +41,7 @@ const emptyForm = {
     tds_tcs: 'TDS',
     tds_tcs_tax: '',
     adjustment: 0,
-    rounding: 0,
+
     amount: 0,
     customer_notes: 'THANK YOU FOR YOUR BUSINESS, YOUR TRUST, AND YOUR CONFIDENCE. IT IS OUR PLEASURE TO WORK WITH YOUR BUSINESS.',
     terms_conditions: 'NOTE:\n1. NO COMPLAINTS SHALL BE ENTERTAINED AFTER 3 DAYS OF RECEIPT OF THE GOODS\n2. ONCE USED PRODUCT WILL NOT BE TAKEN BACK.\n3. INTEREST @ 24% p.a WILL BE CHARGED IF THE PAYMENT IS NOT MADE WITHIN 30 DAYS',
@@ -73,6 +74,7 @@ const NewInvoicePage = () => {
     const [error, setError] = useState('');
     
     const [clients, setClients] = useState([]);
+    const [clientTypeFilter, setClientTypeFilter] = useState('all');
     const [products, setProducts] = useState([]);
     const [bankAccounts, setBankAccounts] = useState([]);
     const [attachedFiles, setAttachedFiles] = useState([]);
@@ -279,15 +281,12 @@ const NewInvoicePage = () => {
         }
         const adjustment = parseFloat(form.adjustment) || 0;
         const total = sub_total + shipping + cgst + sgst - discountAmt + adjustment;
-        const roundedTotal = Math.round(total);
-        const rounding = roundedTotal - total;
         setForm(f => ({
             ...f,
             sub_total,
             cgst,
             sgst,
-            rounding: parseFloat(rounding.toFixed(2)),
-            amount: roundedTotal
+            amount: parseFloat(total.toFixed(2))
         }));
     }, [form.items, form.cgst_percent, form.sgst_percent, form.shipping_charges, form.discount, form.discount_type, form.adjustment]);
 
@@ -317,6 +316,7 @@ const NewInvoicePage = () => {
     };
 
     const selectedClient = clients.find(c => c.id === form.client_id);
+    const filteredClients = clientTypeFilter === 'all' ? clients : clients.filter(c => (c.type || 'client') === clientTypeFilter);
 
     /* ─── Form Field Style Helpers ─── */
     const fieldSx = {
@@ -350,6 +350,26 @@ const NewInvoicePage = () => {
                     <Grid container spacing={3}>
                         {/* Customer Name */}
                         <Grid size={12}>
+                            {/* Type filter toggle */}
+                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                                <Typography variant="caption" sx={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.4 }}>Filter by Type:</Typography>
+                                <ToggleButtonGroup
+                                    value={clientTypeFilter}
+                                    exclusive
+                                    size="small"
+                                    onChange={(e, val) => { if (val !== null) { setClientTypeFilter(val); setForm(f => ({ ...f, client_id: '' })); } }}
+                                    sx={{ height: 28 }}
+                                >
+                                    <ToggleButton value="all" sx={{ px: 1.5, fontSize: '11px', fontWeight: 600 }}>All</ToggleButton>
+                                    <ToggleButton value="client" sx={{ px: 1.5, fontSize: '11px', fontWeight: 600, color: '#1d4ed8' }}>Client</ToggleButton>
+                                    <ToggleButton value="vendor" sx={{ px: 1.5, fontSize: '11px', fontWeight: 600, color: '#b45309' }}>Vendor</ToggleButton>
+                                </ToggleButtonGroup>
+                                {clientTypeFilter !== 'all' && (
+                                    <Typography variant="caption" sx={{ fontSize: '11px', color: '#64748b' }}>
+                                        {filteredClients.length} {clientTypeFilter}(s) found
+                                    </Typography>
+                                )}
+                            </Box>
                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 <FormControl fullWidth size="small" sx={fieldSx} required>
                                     <InputLabel id="client-select-label">Customer Name</InputLabel>
@@ -360,7 +380,23 @@ const NewInvoicePage = () => {
                                         onChange={(e) => setForm({ ...form, client_id: e.target.value })}
                                     >
                                         <MenuItem value=""><em style={{ color: '#9ca3af' }}>Select or type to search</em></MenuItem>
-                                        {clients.map(c => <MenuItem key={c.id} value={c.id}>{c.patient_name}</MenuItem>)}
+                                        {filteredClients.map(c => (
+                                            <MenuItem key={c.id} value={c.id}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                                    <span style={{ flex: 1 }}>{c.customer_name || c.patient_name}</span>
+                                                    <Chip
+                                                        label={c.type ? c.type.charAt(0).toUpperCase() + c.type.slice(1) : 'Client'}
+                                                        size="small"
+                                                        sx={{
+                                                            height: 18, fontSize: '10px', fontWeight: 600, px: 0.5,
+                                                            bgcolor: c.type === 'vendor' ? '#fef3c7' : '#eff6ff',
+                                                            color: c.type === 'vendor' ? '#92400e' : '#1d4ed8',
+                                                            border: c.type === 'vendor' ? '1px solid #fde68a' : '1px solid #bfdbfe',
+                                                        }}
+                                                    />
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                                 <Chip label="⊙ INR" size="small" sx={{ bgcolor: '#eff6ff', color: '#1d4ed8', fontWeight: 600, fontSize: '11px', borderRadius: 1, height: 32 }} />
@@ -942,11 +978,6 @@ const NewInvoicePage = () => {
                                 />
                             </Box>
 
-                            {/* Round Off */}
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 1.5, borderBottom: '1px solid #f3f4f6' }}>
-                                <Typography sx={{ fontSize: '13px', color: '#374151' }}>Round Off</Typography>
-                                <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{form.rounding}</Typography>
-                            </Box>
 
                             {/* Grand Total */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2, bgcolor: '#f0fdf4' }}>

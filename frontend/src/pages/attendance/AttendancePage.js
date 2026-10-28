@@ -842,10 +842,24 @@ const AttendancePage = () => {
                                                             />
                                                         </Box>
                                                     </Box>
-                                                    {log.check_in_address && (
+                                                    {(log.current_address || log.check_in_address) && (
                                                         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, pl: 6.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                             <LocationOn sx={{ fontSize: 12 }} />
-                                                            {log.check_in_address.length > 35 ? log.check_in_address.substring(0, 35) + '…' : log.check_in_address}
+                                                            {(() => { const addr = log.current_address || log.check_in_address; return addr.length > 35 ? addr.substring(0, 35) + '…' : addr; })()}
+                                                        </Typography>
+                                                    )}
+                                                    {log.check_in_latitude && log.check_in_longitude && (
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ pl: 6.5, mt: 0.5, fontSize: '0.72rem' }}>
+                                                            📍 Prev: <a href={`https://www.google.com/maps?q=${log.check_in_latitude},${log.check_in_longitude}`} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                                                                {parseFloat(log.check_in_latitude).toFixed(6)}, {parseFloat(log.check_in_longitude).toFixed(6)}
+                                                            </a>
+                                                        </Typography>
+                                                    )}
+                                                    {log.current_latitude && log.current_longitude && (
+                                                        <Typography variant="caption" display="block" color="success.main" sx={{ pl: 6.5, mt: 0.2, fontSize: '0.72rem', fontWeight: 500 }}>
+                                                            📡 Curr: <a href={`https://www.google.com/maps?q=${log.current_latitude},${log.current_longitude}`} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                                                                {parseFloat(log.current_latitude).toFixed(6)}, {parseFloat(log.current_longitude).toFixed(6)}
+                                                            </a>
                                                         </Typography>
                                                     )}
                                                     {!hasCoords && (
@@ -959,11 +973,15 @@ const AttendancePage = () => {
                                                                 <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600 }}>
                                                                     Check-in: {formatTime(log.check_in_time)}
                                                                 </Typography>
-                                                                {log.check_in_address && (
+                                                                {log.current_address ? (
+                                                                    <Typography variant="caption" display="block" color="success.main" sx={{ mt: 0.5 }}>
+                                                                        📡 {log.current_address}
+                                                                    </Typography>
+                                                                ) : log.check_in_address ? (
                                                                     <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                                                                         📍 {log.check_in_address}
                                                                     </Typography>
-                                                                )}
+                                                                ) : null}
                                                                 {(log.current_location_updated_at || log.updatedAt) && (
                                                                     <Typography variant="caption" display="block" sx={{ mt: 0.5, color: log.current_latitude ? 'success.main' : 'text.secondary', fontWeight: 600 }}>
                                                                         {log.current_latitude ? '📡 Live location' : '📍 Check-in location'} · Last updated: {new Date(log.current_location_updated_at || log.updatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}

@@ -12,7 +12,7 @@ const run = async () => {
 
         await sequelize.query(`
             ALTER TABLE attendance
-            ADD COLUMN IF NOT EXISTS current_location_updated_at DATETIME DEFAULT NULL;
+            ADD COLUMN current_location_updated_at DATETIME DEFAULT NULL;
         `);
 
         console.log('✅ Column current_location_updated_at added to attendance table.');

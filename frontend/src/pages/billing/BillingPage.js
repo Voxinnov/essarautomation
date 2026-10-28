@@ -5,7 +5,7 @@ import {
     IconButton, Typography, Pagination, Tooltip, CardContent, Button,
     FormControl, InputLabel, Select, MenuItem, Grid
 } from '@mui/material';
-import { Edit, Delete, Print, Visibility } from '@mui/icons-material';
+import { Edit, Delete, Print, Visibility, FileCopy } from '@mui/icons-material';
 import { billingService, companyProfileService } from '../../services';
 import api from '../../services/api';
 import { formatDate, formatCurrency, BILLING_STATUSES } from '../../utils/constants';
@@ -58,7 +58,7 @@ const BillingPage = () => {
         catch { alert('Failed to delete'); }
     };
 
-    const handlePrint = (item, shouldPrint = true) => {
+    const handlePrint = (item, shouldPrint = true, isDuplicate = false) => {
         const bank = item.bank_account || bankAccounts.find(b => b.id === item.bank_account_id);
         const companyName = companyProfile?.company_name || 'ESSAR ENGINEERS';
         const addressText = companyProfile?.address_line_1 
@@ -314,7 +314,7 @@ const BillingPage = () => {
                             </td>
                             <td style="width: 200px; text-align: right; vertical-align: top;">
                                 <div class="badge-box">
-                                    <div class="badge-title">ORIGINAL</div>
+                                    <div class="badge-title">${isDuplicate ? 'DUPLICATE' : 'ORIGINAL'}</div>
                                     <div>INVOICE</div>
                                 </div>
                                 <div class="inv-no-text">INV NO: ${item.invoice_number}</div>
@@ -346,7 +346,7 @@ const BillingPage = () => {
                             </td>
                             <td style="width: 30%;">
                                 <div class="section-title">BILL TO:</div>
-                                <strong>${item.client?.patient_name || '-'}</strong><br>
+                                <strong>${item.client?.customer_name || item.client?.patient_name || '-'}</strong><br>
                                 ${item.client?.address ? `${item.client.address.replace(/\n/g, '<br>')}<br>` : ''}
                                 ${item.client?.phone ? `Phone: ${item.client.phone}<br>` : ''}
                                 ${item.client?.email ? `Email: ${item.client.email}` : ''}
@@ -354,7 +354,7 @@ const BillingPage = () => {
                             <td style="width: 30%;">
                                 <div class="section-title">SHIP TO:</div>
                                 ${item.shipping_address ? `
-                                    <strong>${item.client?.patient_name || '-'}</strong><br>
+                                    <strong>${item.client?.customer_name || item.client?.patient_name || '-'}</strong><br>
                                     ${item.shipping_address.replace(/\n/g, '<br>')}<br>
                                     ${item.client?.phone ? `Phone: ${item.client.phone}<br>` : ''}
                                 ` : `
@@ -452,19 +452,20 @@ const BillingPage = () => {
                                         <td style="text-align: right; padding-right: 8px !important;">-${formatCurrency(item.discount_total || item.discount).replace('₹', '')}</td>
                                     </tr>
                                     ` : ''}
-                                    ${item.rounding ? `
-                                    <tr>
-                                        <td style="padding-left: 8px !important;">ROUNDING</td>
-                                        <td style="text-align: right; padding-right: 8px !important;">${formatCurrency(item.rounding).replace('₹', '')}</td>
-                                    </tr>
-                                    ` : ''}
+
                                     <tr class="total-row">
                                         <td style="padding-left: 8px !important;">TOTAL</td>
                                         <td style="text-align: right; padding-right: 8px !important;">${formatCurrency(item.amount).replace('₹', '')}</td>
                                     </tr>
                                     <tr class="balance-row">
                                         <td style="padding-left: 8px !important; color: #333;">BALANCE DUE</td>
-                                        <td style="text-align: right; padding-right: 8px !important;">${formatCurrency(item.amount).replace('₹', '')}</td>
+                                        <td style="text-align: right; padding-right: 8px !important;">${
+                                            item.status === 'paid'
+                                                ? formatCurrency(0).replace('₹', '')
+                                                : item.status === 'partially_paid'
+                                                    ? formatCurrency(Math.max(0, parseFloat(item.amount || 0) - parseFloat(item.advance_payment || 0))).replace('₹', '')
+                                                    : formatCurrency(item.amount).replace('₹', '')
+                                         }</td>
                                     </tr>
                                 </table>
 
@@ -540,7 +541,7 @@ const BillingPage = () => {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Invoice Number</TableCell>
-                                    <TableCell>Client</TableCell>
+                                    <TableCell>Customer</TableCell>
                                     <TableCell>Date</TableCell>
                                     <TableCell>Amount</TableCell>
                                     <TableCell>Status</TableCell>
@@ -553,13 +554,14 @@ const BillingPage = () => {
                                 ) : items.map((item) => (
                                     <TableRow key={item.id} hover>
                                         <TableCell><Typography variant="body2" fontWeight={700} color="primary">{item.invoice_number}</Typography></TableCell>
-                                        <TableCell>{item.client?.patient_name || '-'}</TableCell>
+                                        <TableCell>{item.client?.customer_name || item.client?.patient_name || '-'}</TableCell>
                                         <TableCell>{formatDate(item.invoice_date)}</TableCell>
                                         <TableCell><Typography fontWeight={700}>{formatCurrency(item.amount)}</Typography></TableCell>
                                         <TableCell><StatusChip status={item.status} /></TableCell>
                                         <TableCell align="center">
                                             <Tooltip title="View"><IconButton size="small" onClick={() => handlePrint(item, false)} color="primary"><Visibility fontSize="small" /></IconButton></Tooltip>
-                                            <Tooltip title="Print/PDF"><IconButton size="small" onClick={() => handlePrint(item, true)} color="secondary"><Print fontSize="small" /></IconButton></Tooltip>
+                                            <Tooltip title="Print/PDF (Original)"><IconButton size="small" onClick={() => handlePrint(item, true, false)} color="secondary"><Print fontSize="small" /></IconButton></Tooltip>
+                                            <Tooltip title="Print Duplicate"><IconButton size="small" onClick={() => handlePrint(item, true, true)} color="warning"><FileCopy fontSize="small" /></IconButton></Tooltip>
                                             <Tooltip title="Edit"><IconButton size="small" onClick={() => navigate(`/billing/${item.id}/edit`)} color="info"><Edit fontSize="small" /></IconButton></Tooltip>
                                             {user?.role === 'admin' && (
                                                 <Tooltip title="Delete"><IconButton size="small" onClick={() => handleDelete(item.id)} color="error"><Delete fontSize="small" /></IconButton></Tooltip>

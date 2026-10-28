@@ -4,7 +4,8 @@ import {
     Box, Card, Typography, TextField, Button, Grid, IconButton,
     FormControl, Select, MenuItem, InputLabel, Chip, Radio, RadioGroup,
     FormControlLabel, Checkbox, InputAdornment, Alert, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions
+    TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions,
+    ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import { Add, Delete, Send, AttachFile, Refresh, Info } from '@mui/icons-material';
 import { proformaService, clientService, stockService, doctorService, hospitalService, authService, companyProfileService } from '../../services';
@@ -72,6 +73,7 @@ const NewProformaPage = () => {
     const [error, setError] = useState('');
 
     const [clients, setClients] = useState([]);
+    const [clientTypeFilter, setClientTypeFilter] = useState('all');
     const [products, setProducts] = useState([]);
     const [bankAccounts, setBankAccounts] = useState([]);
     const [attachedFiles, setAttachedFiles] = useState([]);
@@ -317,6 +319,7 @@ const NewProformaPage = () => {
     };
 
     const selectedClient = clients.find(c => c.id === form.client_id);
+    const filteredClients = clientTypeFilter === 'all' ? clients : clients.filter(c => (c.type || 'client') === clientTypeFilter);
 
     /* ─── Form Field Style Helpers ─── */
     const fieldSx = {
@@ -350,6 +353,26 @@ const NewProformaPage = () => {
                     <Grid container spacing={3}>
                         {/* Customer Name */}
                         <Grid size={12}>
+                            {/* Type filter toggle */}
+                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                                <Typography variant="caption" sx={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.4 }}>Filter by Type:</Typography>
+                                <ToggleButtonGroup
+                                    value={clientTypeFilter}
+                                    exclusive
+                                    size="small"
+                                    onChange={(e, val) => { if (val !== null) { setClientTypeFilter(val); setForm(f => ({ ...f, client_id: '' })); } }}
+                                    sx={{ height: 28 }}
+                                >
+                                    <ToggleButton value="all" sx={{ px: 1.5, fontSize: '11px', fontWeight: 600 }}>All</ToggleButton>
+                                    <ToggleButton value="client" sx={{ px: 1.5, fontSize: '11px', fontWeight: 600, color: '#1d4ed8' }}>Client</ToggleButton>
+                                    <ToggleButton value="vendor" sx={{ px: 1.5, fontSize: '11px', fontWeight: 600, color: '#b45309' }}>Vendor</ToggleButton>
+                                </ToggleButtonGroup>
+                                {clientTypeFilter !== 'all' && (
+                                    <Typography variant="caption" sx={{ fontSize: '11px', color: '#64748b' }}>
+                                        {filteredClients.length} {clientTypeFilter}(s) found
+                                    </Typography>
+                                )}
+                            </Box>
                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 <FormControl fullWidth size="small" sx={fieldSx} required>
                                     <InputLabel id="client-select-label">Customer Name</InputLabel>
@@ -360,7 +383,23 @@ const NewProformaPage = () => {
                                         onChange={(e) => setForm({ ...form, client_id: e.target.value })}
                                     >
                                         <MenuItem value=""><em style={{ color: '#9ca3af' }}>Select or type to search</em></MenuItem>
-                                        {clients.map(c => <MenuItem key={c.id} value={c.id}>{c.patient_name}</MenuItem>)}
+                                        {filteredClients.map(c => (
+                                            <MenuItem key={c.id} value={c.id}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                                    <span style={{ flex: 1 }}>{c.customer_name || c.patient_name}</span>
+                                                    <Chip
+                                                        label={c.type ? c.type.charAt(0).toUpperCase() + c.type.slice(1) : 'Client'}
+                                                        size="small"
+                                                        sx={{
+                                                            height: 18, fontSize: '10px', fontWeight: 600, px: 0.5,
+                                                            bgcolor: c.type === 'vendor' ? '#fef3c7' : '#eff6ff',
+                                                            color: c.type === 'vendor' ? '#92400e' : '#1d4ed8',
+                                                            border: c.type === 'vendor' ? '1px solid #fde68a' : '1px solid #bfdbfe',
+                                                        }}
+                                                    />
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                                 <Chip label="⊙ INR" size="small" sx={{ bgcolor: '#eff6ff', color: '#1d4ed8', fontWeight: 600, fontSize: '11px', borderRadius: 1, height: 32 }} />

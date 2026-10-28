@@ -22,7 +22,7 @@ const DRAWER_WIDTH = 260;
 const navItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard', permission: 'dashboard_view' },
     { text: 'Tasks', icon: <Assignment />, path: '/tasks', permission: 'tasks_view' },
-    { text: 'Clients', icon: <People />, path: '/clients', permission: 'clients_view' },
+    { text: 'Customers', icon: <People />, path: '/clients', permission: 'clients_view' },
     { text: 'Hospitals', icon: <LocalHospital />, path: '/hospitals', permission: 'hospitals_view' },
     { text: 'Doctors', icon: <MedicalServices />, path: '/doctors', permission: 'doctors_view' },
     { text: 'Work Updates', icon: <Update />, path: '/work-updates', permission: 'work_updates_view' },

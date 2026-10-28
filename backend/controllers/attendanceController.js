@@ -1,6 +1,47 @@
 const { Attendance, User, TimeLog, Task } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
+const https = require('https');
+const http = require('http');
+
+/**
+ * Reverse geocode latitude/longitude to a human-readable address using Nominatim.
+ * Returns a short formatted address or null on failure.
+ */
+const reverseGeocodeServer = (latitude, longitude) => {
+    return new Promise((resolve) => {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`;
+        const options = {
+            headers: {
+                'User-Agent': 'EssarAttendanceApp/1.0 (contact@essaram.bvox.in)',
+                'Accept-Language': 'en',
+            },
+        };
+        https.get(url, options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed && parsed.address) {
+                        const a = parsed.address;
+                        // Build a short, human-readable address
+                        const parts = [
+                            a.road || a.pedestrian || a.footway,
+                            a.suburb || a.neighbourhood || a.hamlet,
+                            a.city || a.town || a.village || a.county,
+                        ].filter(Boolean);
+                        resolve(parts.length > 0 ? parts.join(', ') : parsed.display_name || null);
+                    } else {
+                        resolve(null);
+                    }
+                } catch (e) {
+                    resolve(null);
+                }
+            });
+        }).on('error', () => resolve(null));
+    });
+};
 
 // IST offset: UTC+5:30
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
@@ -484,10 +525,16 @@ const updateLocation = async (req, res, next) => {
             });
         }
 
+        // If no address provided by client, try server-side reverse geocoding
+        let resolvedAddress = address || null;
+        if (!resolvedAddress) {
+            resolvedAddress = await reverseGeocodeServer(latNum, lngNum);
+        }
+
         await attendance.update({
             current_latitude: latNum,
             current_longitude: lngNum,
-            current_address: address || attendance.current_address,
+            current_address: resolvedAddress || attendance.current_address,
             current_location_updated_at: new Date(),
         });
 

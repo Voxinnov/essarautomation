@@ -5,7 +5,7 @@ import {
     IconButton, Typography, Pagination, Tooltip, CardContent, Button,
     FormControl, InputLabel, Select, MenuItem, Grid
 } from '@mui/material';
-import { Edit, Delete, Print, Visibility, Receipt } from '@mui/icons-material';
+import { Edit, Delete, Print, Visibility, Receipt, FileCopy } from '@mui/icons-material';
 import { proformaService, companyProfileService } from '../../services';
 import api from '../../services/api';
 import { formatDate, formatCurrency } from '../../utils/constants';
@@ -89,7 +89,7 @@ const ProformaPage = () => {
 
 
 
-    const handlePrint = (item, shouldPrint = true) => {
+    const handlePrint = (item, shouldPrint = true, isDuplicate = false) => {
         const bank = item.bank_account || bankAccounts.find(b => b.id === item.bank_account_id);
         const companyName = companyProfile?.company_name || 'ESSAR ENGINEERS';
         const addressText = companyProfile?.address_line_1 
@@ -345,7 +345,7 @@ const ProformaPage = () => {
                             </td>
                             <td style="width: 200px; text-align: right; vertical-align: top;">
                                 <div class="badge-box">
-                                    <div class="badge-title">PROFORMA</div>
+                                    <div class="badge-title">${isDuplicate ? 'DUPLICATE' : 'PROFORMA'}</div>
                                     <div>INVOICE</div>
                                 </div>
                                 <div class="inv-no-text">PI NO: ${item.invoice_number}</div>
@@ -619,7 +619,8 @@ const ProformaPage = () => {
                                         <TableCell><StatusChip status={item.status} /></TableCell>
                                         <TableCell align="center">
                                             <Tooltip title="View"><IconButton size="small" onClick={() => handlePrint(item, false)} color="primary"><Visibility fontSize="small" /></IconButton></Tooltip>
-                                            <Tooltip title="Print/PDF"><IconButton size="small" onClick={() => handlePrint(item, true)} color="secondary"><Print fontSize="small" /></IconButton></Tooltip>
+                                            <Tooltip title="Print/PDF (Original)"><IconButton size="small" onClick={() => handlePrint(item, true, false)} color="secondary"><Print fontSize="small" /></IconButton></Tooltip>
+                                            <Tooltip title="Print Duplicate"><IconButton size="small" onClick={() => handlePrint(item, true, true)} color="warning"><FileCopy fontSize="small" /></IconButton></Tooltip>
                                             <Tooltip title="Convert to Invoice"><IconButton size="small" onClick={() => handleConvertToInvoice(item.id)} color="success" disabled={item.status === 'Converted to Invoice'}><Receipt fontSize="small" /></IconButton></Tooltip>
                                             <Tooltip title="Edit"><IconButton size="small" onClick={() => navigate(`/proforma/${item.id}/edit`)} color="info"><Edit fontSize="small" /></IconButton></Tooltip>
                                             {user?.role === 'admin' && (
